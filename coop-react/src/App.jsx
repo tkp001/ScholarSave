@@ -1,37 +1,39 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import {Route, createBrowserRouter, createRoutesFromElements, RouterProvider} from 'react-router-dom';
 import './App.css'
 
+import MainLayout from './layouts/MainLayout';
+import HomePage from './pages/HomePage';
+import ExpensesPage from './pages/ExpensesPage';
+import IncomePage from './pages/IncomePage';
+import AllowancePage from './pages/AllowancePage';
+import LearningPage from './pages/LearningPage';
+import ToolsPage from './pages/ToolsPage';
+import SettingsPage from './pages/SettingsPage';
+import NotFoundPage from './pages/NotFoundPage';
+
+
+
+
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route path='/' element={<MainLayout />}>
+      <Route index element={<HomePage />} />
+      <Route path='/expenses' element={<ExpensesPage />} />
+      <Route path='/income' element={<IncomePage />} />
+      <Route path='/allowance' element={<AllowancePage />} />
+      <Route path='/learning' element={<LearningPage />} /> 
+      <Route path='/tools' element={<ToolsPage />} /> 
+      <Route path='/settings' element={<SettingsPage />} /> 
+      <Route path='*' element={<NotFoundPage />} />
+    </Route>
+  )
+);
+
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
     <>
-      {/* <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p> */}
-
-      <h1 class="text-3xl font-bold underlined bg-blue-500 text-green-950">
-        Hello world!
-      </h1>
+      <RouterProvider router={router} />
     </>
   )
 }
