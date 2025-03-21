@@ -1,12 +1,12 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom';
+import AuthService from '../utils/AuthService';
 
 
 const MainLayout = () => {
   return (
     <>
-      {/* <Navbar /> */}
-      <Outlet />
+        <AuthService><Outlet /></AuthService>      
     </>
   );
 };

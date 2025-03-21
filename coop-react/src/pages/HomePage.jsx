@@ -1,18 +1,21 @@
 import React from 'react'
-
+import { useContext } from 'react'
+import UserContext from '../UserContext'
 
 const HomePage = () => {
-  const apiUrl = import.meta.REACT_APP_API_URL;
-  console.log("hi")
+  const {user} = useContext(UserContext)
+
 
   return (
     <>
-    
       <div>HomePage</div>
-      <h1>{apiUrl}</h1>
-
+      {user ? <div>{user.email}</div> : <div>Logged out</div>}
+      {/* {user && user.reloadUserInfo.emailVerified? <div>true</div> : <div>false</div>} */}
+    
     </>
-  )
-}
+    )
+  }
+  
+
 
 export default HomePage
