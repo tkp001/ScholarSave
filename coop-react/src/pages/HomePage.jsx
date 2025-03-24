@@ -8,9 +8,10 @@ const HomePage = () => {
 
   return (
     <>
-      <div>HomePage</div>
-      {user ? <div>{user.email}</div> : <div>Logged out</div>}
-      {/* {user && user.reloadUserInfo.emailVerified? <div>true</div> : <div>false</div>} */}
+    <div className='flex flex-col flex-grow bg-yellow-400'>
+
+
+    </div>
     
     </>
     )

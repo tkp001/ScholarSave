@@ -7,6 +7,7 @@ import { useState, useContext } from 'react';
 import UserContext from '../UserContext';
 import { Navigate } from 'react-router-dom';
 
+//currently only page that uses firebase auth commands
 
 const AuthPage = () => {
   const auth = getAuth();
@@ -15,6 +16,7 @@ const AuthPage = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
 
   function authSignout() {
     signOut(auth).then(() => {
@@ -86,9 +88,12 @@ const AuthPage = () => {
   return (
     <>
     <div className='flex flex-col w-screen h-screen items-center p-10'>
-      <h1 className='text-6xl tracking-tighter text-balance mb-10'>Sign Up / Log In</h1>
+      <h1 className='text-6xl tracking-tighter text-balance mb-10'>{user ? `Welcome ${user.displayName}` : "Sign In / Sign Up"}</h1>
 
-      <div>
+      {user ? null :
+      
+      <>
+        <div>
         <input
           className='border-2 border-gray-500 rounded-xl m-1 p-1'
           type="email"
@@ -120,8 +125,11 @@ const AuthPage = () => {
         <p className='mx-4 text-white'>Sign in with Google</p>
       
       </button>
+      </>
+      
+      } 
 
-      {user ? <button className='mt-10 m-1 px-3 rounded-xl bg-gray-500' onClick={authSignout}>SIGN OUT</button> : <div className='m-10'>Not Signed In.</div>}
+      {user ? <button className='mt-2 m-1 px-3 rounded-xl bg-gray-500' onClick={authSignout}>YOU ARE SIGNED IN | SIGN OUT</button> : <div className='m-10'>Not Signed In.</div>}
 
     </div>
       
