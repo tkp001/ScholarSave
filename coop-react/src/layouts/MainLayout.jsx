@@ -12,7 +12,7 @@ const MainLayout = () => {
   return (
     <>
         <AuthService>
-          <div className='flex flex-row w-screen h-screen'>
+          <div className='flex flex-grow flex-row w-screen h-screen'>
 
             {location.pathname !== '/auth' && user ? 
             
