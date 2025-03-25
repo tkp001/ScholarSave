@@ -9,51 +9,9 @@ const HomePage = () => {
   return (
     <>
       <div className='flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white'>
-        <div className="flex flex-col w-full p-10">
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
-          <div className='text-4xl'>{`Hi ${user.displayName}!`}</div>
+        <div className="flex flex-col w-full h-400 p-10">
+          <div className='text-4xl'>{`Hi ${user.displayName}`}</div>
+          <div>{user.email}</div>
         </div>
       </div>
     </>
