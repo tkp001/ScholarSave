@@ -5,7 +5,7 @@ import { signOut } from "firebase/auth";
 
 import { useState, useContext } from 'react';
 import UserContext from '../UserContext';
-import { Navigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 //currently only page that uses firebase auth commands
 
@@ -129,7 +129,14 @@ const AuthPage = () => {
       
       } 
 
-      {user ? <button className='mt-2 m-1 px-3 rounded-xl bg-gray-500' onClick={authSignout}>YOU ARE SIGNED IN | SIGN OUT</button> : <div className='m-10'>Not Signed In.</div>}
+      {user ? 
+      
+      <>
+        <button className='mt-2 m-1 px-3 rounded-xl bg-gray-500' onClick={authSignout}>YOU ARE SIGNED IN | SIGN OUT</button> 
+        <a className='mt-2 m-1 px-3 rounded-xl bg-gray-500' href={window.location.origin}>Go to HomePage</a> 
+      </>
+      
+      : <div className='m-10'>Not Signed In.</div>}
 
     </div>
       
