@@ -22,8 +22,8 @@ const Navbar = () => {
     
     return (
     <>
-        <div className='flex flex-col w-60 h-screen p-4 bg-gray-700 text-white text-2xl '>
-          <div className='mb-10'><SiSemanticscholar size={70}/></div>
+        <div className='flex flex-col w-60 min-w-60 h-screen p-4 bg-gray-700 text-white text-2xl '>
+          <Link to='/' className='mb-10'><SiSemanticscholar size={70}/></Link>
           <NavLink to='/' target="_self" className={activeLink}><SiGoogleanalytics className='mr-4 my-2'/>Analytics</NavLink>
           <NavLink to='/expenses' target="_self" className={activeLink}><AiFillBank className='mr-4 my-2'/>Expenses</NavLink>
           <NavLink to='/income'target="_self" className={activeLink}><FaMoneyBills className='mr-4 my-2'/>Income</NavLink>

@@ -3,7 +3,7 @@ import React from 'react';
 const ExpenseList = ({ expenses, filterExpenses, handleFilterExpenseChange }) => {
   return (
     <div>
-      <ul className="bg-gray-700 p-2 rounded-3xl">
+      <ul className="bg-gray-700 p-2 rounded-3xl my-3">
         <div className="flex flex-row flex-wrap p-1">
           <input
             className="border-2 border-gray-500 rounded-xl m-1 p-1 w-70"

@@ -5,6 +5,8 @@ import UserContext from '../UserContext';
 import { useContext } from 'react';
 import ExpenseForm from '../components/ExpenseForm';
 import ExpenseList from '../components/ExpenseList';
+import BudgetWidget from '../components/BudgetWidget';
+import SavingWidget from '../components/SavingWidget';
 
 
 const ExpensesPage = () => {
@@ -41,7 +43,7 @@ const ExpensesPage = () => {
     try {
       const conditions = [];
 
-      // Add filters for category, name, and date
+      //Add filters
       if (filterExpenses.category) {
         conditions.push(where("category", "==", filterExpenses.category));
       }
@@ -52,7 +54,7 @@ const ExpensesPage = () => {
         conditions.push(where("date", "==", filterExpenses.date));
       }
 
-      // Add range filters for amount
+      //Add range filters
       if (filterExpenses.amountmin && filterExpenses.amountmax) {
         conditions.push(where("amount", ">=", parseFloat(filterExpenses.amountmin)));
         conditions.push(where("amount", "<=", parseFloat(filterExpenses.amountmax)));
@@ -64,10 +66,10 @@ const ExpensesPage = () => {
 
       let q;
       if (conditions.length > 0) {
-        // If there are filters, include them in the query
+        //If there are filters
         q = query(expensesRef, where("user_id", "==", user.uid), ...conditions);
       } else {
-        // If no filters, fetch all expenses for the user
+        //If no filters
         q = query(expensesRef, where("user_id", "==", user.uid));
       }
 
@@ -92,12 +94,17 @@ const ExpensesPage = () => {
       <div className="flex flex-col w-full p-10 max-w-250">
           <>
             <div className="text-5xl">Spent this Month: N/A</div>
-            <button
-              className="w-20 h-8 bg-green-600 rounded-4xl my-5"
-              onClick={() => setAddExpense(!addExpense)}
-            >
-              +Add
-            </button>
+            <div>
+              <button
+                className="w-24 h-8 bg-green-600 rounded-4xl my-5 mr-3"
+                onClick={() => setAddExpense(!addExpense)}
+              >+ Add</button>
+              <button
+                className="w-60 h-8 bg-amber-400 rounded-4xl my-5 mr-3"
+                onClick={() => console.log("upload")}
+              >+ Upload Expenses/Income</button>
+            </div>
+
             {addExpense ? (
               <ExpenseForm fetchExpenses={fetchExpenses}/>
             ) : null}
@@ -107,6 +114,12 @@ const ExpensesPage = () => {
               filterExpenses={filterExpenses}
               handleFilterExpenseChange={handleFilterExpenseChange}
             />
+
+            <div className='text-3xl'>Budget Widgets</div>
+            <BudgetWidget progress={100}/>
+            <div className='text-3xl my-3'>Saving Widgets</div>
+            <SavingWidget progress={50} />
+            <SavingWidget progress={90} />
           </>
       </div>
     </div>
