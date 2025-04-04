@@ -5,7 +5,7 @@ import { signOut } from "firebase/auth";
 
 import { useState, useContext } from 'react';
 import UserContext from '../UserContext';
-import { useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 
 //currently only page that uses firebase auth commands
 
@@ -24,7 +24,6 @@ const AuthPage = () => {
     }).catch((error) => {
       // An error happened.
     });
-    
   }
   
   function authSignupPassword() {

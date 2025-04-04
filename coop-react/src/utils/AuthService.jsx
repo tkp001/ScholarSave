@@ -43,6 +43,10 @@ const AuthService = ({children}) => {
       return <Navigate to="/auth" />;
     }
 
+    if (user && location.pathname == '/auth') {
+      return <Navigate to="/" />;
+    }
+
     return (
       // auth provider using createcontext
     <>
