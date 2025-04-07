@@ -61,7 +61,7 @@ const ExpenseList = ({ expenses, filterExpenses, handleFilterExpenseChange }) =>
                 <div className="w-100">{expense.name}</div>
                 <div className="w-40">{expense.date}</div>
                 <div className="w-60">{expense.category}</div>
-                <div>{expense.amount}</div>
+                <div>${expense.amount}</div>
               </li>
             ))}
           </div>

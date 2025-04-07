@@ -92,7 +92,6 @@ const ExpensesPage = () => {
   return (
     <div className="flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white">
       <div className="flex flex-col w-full p-10 max-w-250">
-          <>
             <div className="text-5xl">Spent this Month: N/A</div>
             <div>
               <button
@@ -120,7 +119,6 @@ const ExpensesPage = () => {
             <div className='text-3xl my-3'>Saving Widgets</div>
             <SavingWidget progress={50} />
             <SavingWidget progress={90} />
-          </>
       </div>
     </div>
   );
