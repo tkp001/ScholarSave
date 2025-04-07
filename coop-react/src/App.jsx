@@ -52,3 +52,11 @@ function App() {
 }
 
 export default App
+
+
+
+
+
+
+//wallet/balance
+//transactions - expenses + income, sortable (read, update etc main functions should be done)
