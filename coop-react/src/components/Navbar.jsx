@@ -25,18 +25,13 @@ const Navbar = () => {
         <div className='flex flex-col w-60 min-w-60 h-screen p-4 bg-gray-700 text-white text-2xl '>
           <Link to='/' className='mb-10'><SiSemanticscholar size={70}/></Link>
           <NavLink to='/' target="_self" className={activeLink}><SiGoogleanalytics className='mr-4 my-2'/>Analytics</NavLink>
-          <NavLink to='/expenses' target="_self" className={activeLink}><AiFillBank className='mr-4 my-2'/>Expenses</NavLink>
-          <NavLink to='/income'target="_self" className={activeLink}><FaMoneyBills className='mr-4 my-2'/>Income</NavLink>
+          <NavLink to='/balance' target="_self" className={activeLink}><AiFillBank className='mr-4 my-2'/>Balance</NavLink>
+          <NavLink to='/transactions' target="_self" className={activeLink}><FaMoneyBills className='mr-4 my-2'/>Transactions</NavLink>
           <NavLink to='/allowance' target="_self" className={activeLink}><FaPiggyBank className='mr-4 my-2'/>Allowance</NavLink>
           <NavLink to='/learning' target="_self" className={activeLink}><FaBook className='mr-4 my-2'/>Learning</NavLink>
           <NavLink to='/tools' target="_self" className={activeLink}><FiTool className='mr-4 my-2'/>Tools</NavLink>
           <NavLink to='/settings' target="_self" className={activeLink}><IoMdSettings className='mr-4 my-2' />Settings</NavLink>
-
-
         </div>
-        
-    
-    
     </>
   )
 }

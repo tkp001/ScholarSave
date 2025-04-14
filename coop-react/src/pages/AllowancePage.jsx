@@ -35,7 +35,7 @@ const AllowancePage = () => {
 
   return (
     <div className="flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white">
-      <div className="flex flex-col w-full p-10 max-w-250">
+      {/* <div className="flex flex-col w-full p-10 max-w-250">
       {budgets.map((budget) => (
              <li
                 key={budget.id}
@@ -43,7 +43,7 @@ const AllowancePage = () => {
                 <BudgetWidget name={budget.name} category={budget.category} startDate={budget.start_date} endDate={budget.end_date} amount={budget.amount} progress={100/budget.amount}/>
               </li>
             ))}
-      </div>
+      </div> */}
     </div>
   )
 }

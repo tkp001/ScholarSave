@@ -7,8 +7,8 @@ import UserContext from './UserContext';
 
 import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/HomePage';
-import ExpensesPage from './pages/ExpensesPage';
-import IncomePage from './pages/IncomePage';
+import TransactionsPage from './pages/TransactionsPage';
+import BalancePage from './pages/BalancePage';
 import AllowancePage from './pages/AllowancePage';
 import LearningPage from './pages/LearningPage';
 import ToolsPage from './pages/ToolsPage';
@@ -32,8 +32,8 @@ function App() {
     createRoutesFromElements(
       <Route path='/' element={<MainLayout />}>
         <Route index element={<HomePage />} />
-        <Route path='/expenses' element={<ExpensesPage />} />
-        <Route path='/income' element={<IncomePage />} />
+        <Route path='/balance' element={<BalancePage />} />
+        <Route path='/transactions' element={<TransactionsPage />} />
         <Route path='/allowance' element={<AllowancePage />} />
         <Route path='/learning' element={<LearningPage />} /> 
         <Route path='/tools' element={<ToolsPage />} /> 
@@ -52,11 +52,3 @@ function App() {
 }
 
 export default App
-
-
-
-
-
-
-//wallet/balance
-//transactions - expenses + income, sortable (read, update etc main functions should be done)
