@@ -1,6 +1,6 @@
 import React, { use, useEffect, useState } from 'react';
 import { db } from '../firebaseConfig';
-import { collection, getDocs, getDoc, doc, updateDoc, addDoc, query, where } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, deleteDoc, updateDoc, addDoc, query, where, orderBy } from 'firebase/firestore';
 import UserContext from '../UserContext';
 import { useContext } from 'react';
 import ExpenseForm from '../components/ExpenseForm';
@@ -45,16 +45,23 @@ const TransactionsPage = () => {
 
   const [transactions, setTransactions] = useState([]);
   const [filterTransactions, setFilterTransactions] = useState({
-    category: "",
     name: "",
+    category: "",
+    
+    type: "Expense",
+    filter: "No Filter",
+    filterOrder: "asc",
     date: "",
-    amountmin: "",
-    amountmax: "",
+    startDate: "",
+    endDate: "",
+    amountMin: "",
+    amountMax: "",
   });
 
   const [transactionForm, setTransactionForm] = useState({
     name: "",
-    category: "",
+    category: "Salary/Income",
+    customCategory: false,
     amount: "",
     type: "Expense",
     description: "",
@@ -72,6 +79,8 @@ const TransactionsPage = () => {
       ...prevFormData,
       [name]: value,
     }));
+
+    console.log("filterTransactions", filterTransactions);
   };
 
   const handleTransactionForm = (e) => {
@@ -85,16 +94,58 @@ const TransactionsPage = () => {
         ...prevFormData,
         date: date,
         fullDate: fullDate,
-      }));
+      }));     
+    } else if (name === "category") {
+      if (value === "Custom Category") {
+        setTransactionForm((prevFormData) => ({
+          ...prevFormData,
+          category: "",
+          customCategory: true,
+        }));
+      } else {
+        setTransactionForm((prevFormData) => ({
+          ...prevFormData,
+          category: value,
+          customCategory: false,
+        }));
+      }
     } else {
       setTransactionForm((prevFormData) => ({
         ...prevFormData,
         [name]: value,
       }));
     }
+
+    console.log("transactionForm", transactionForm);
   };
 
-  const addNewTransaction = async () => {
+  async function changeAccountBalance(type, amount, transactionDocRef="N/A") {
+    if (viewedAccount) {
+      const accountDocRef = doc(db, "accounts", viewedAccount.id);
+      //fetch most updated account data
+      // const accountSnapshot = await getDoc(accountDocRef);
+      
+      let newBalance;
+      if (type == "Expense") {
+        newBalance = parseFloat(viewedAccount.balance) - parseFloat(amount);
+      } else if (type == "Income") {
+        newBalance = parseFloat(viewedAccount.balance) + parseFloat(amount);
+      } else newBalance = parseFloat(viewedAccount.balance);
+
+      console.log("viewedAccount.balance", viewedAccount.balance);
+      console.log("amount", amount);
+      console.log("newBalance", newBalance);
+
+      await updateDoc(accountDocRef, {
+        balance: newBalance,
+        last_modified: new Date().toLocaleString(),
+        last_transaction: transactionDocRef,
+      });
+    }
+  }
+  
+
+  async function addNewTransaction() {
     //ensure to update timestamp for last modified and last transaction for the accNumber
     if (!transactionForm.name || !transactionForm.category || !transactionForm.date || !transactionForm.amount) {
       alert("All fields are required. Please fill out the form completely.");
@@ -106,74 +157,71 @@ const TransactionsPage = () => {
       const transactionDocRef = await addDoc(transactionsRef, {...transactionForm, account_number: viewedAccount?.account_number || "",});
 
       //update the last modified and last transaction for the account
-      if (viewedAccount) {
-        const accountDocRef = doc(db, "accounts", viewedAccount.id);
-        //fetch most updated account data
-        // const accountSnapshot = await getDoc(accountDocRef);
-        
-        let newBalance;
-        if (transactionForm.type == "Expense") {
-          newBalance = parseFloat(viewedAccount.balance) - parseFloat(transactionForm.amount);
-        } else if (transactionForm.type == "Income") {
-          newBalance = parseFloat(viewedAccount.balance) + parseFloat(transactionForm.amount);
-        } else newBalance = parseFloat(viewedAccount.balance);
-
-        console.log("viewedAccount.balance", viewedAccount.balance);
-        console.log("transactionForm.amount", transactionForm.amount);
-        console.log("newBalance", newBalance);
-
-        await updateDoc(accountDocRef, {
-          balance: newBalance,
-          last_modified: new Date().toLocaleString(),
-          last_transaction: transactionDocRef.id,
-        });
-      }
-
-
-      alert("Transaction added successfully!");
+      changeAccountBalance(transactionForm.type, transactionForm.amount, transactionDocRef.id);
+      
       setAddTransaction(false);
       fetchTransactions();
+      alert("Transaction added successfully!");
     } catch (error) {
       console.error("Error adding transaction: ", error);
     }
   };
 
+  async function handleDeleteTransaction(id) {
+    //deleting transaction DOES affect main balance
+    
+    const confirmDelete = true;
+
+    if (confirmDelete) {
+      const transactionDocRef = doc(db, "transactions", id);
+      const transactionSnapshot = await getDoc(transactionDocRef);
+
+      deleteDoc(transactionDocRef)
+        .then(() => {
+          changeAccountBalance(transactionSnapshot.data().type, (transactionSnapshot.data().amount*-1));
+          alert("Transaction deleted successfully!");
+          fetchTransactions();
+        })
+        .catch((error) => {
+          console.error("Error deleting transaction: ", error);
+        });
+    }
+  }
+
   const fetchTransactions = async () => {
     try {
-      // const conditions = [];
+      let q = query(
+        transactionsRef,
+        where("user_id", "==", user.uid),
+        where("account_number", "==", viewedAccount.account_number),
+        where("type", "==", filterTransactions.type)
+      );
 
-      // //Add filters
-      // if (filterExpenses.category) {
-      //   conditions.push(where("category", "==", filterExpenses.category));
-      // }
-      // if (filterExpenses.name) {
-      //   conditions.push(where("name", "==", filterExpenses.name));
-      // }
-      // if (filterExpenses.date) {
-      //   conditions.push(where("date", "==", filterExpenses.date));
-      // }
+      if (filterTransactions.name) {
+        q = query(q, where("name", "==", filterTransactions.name));
+      }
+      if (filterTransactions.category) {
+        q = query(q, where("category", "==", filterTransactions.category));
+      }
+      
+      if (filterTransactions.filter == "Date" && filterTransactions.date) {
+        const date = new Date(filterTransactions.date);
+        q = query(q, where("date", "==", new Date(filterTransactions.date).toLocaleDateString()));
+      }
+      if (filterTransactions.filter == "Date Range" && (filterTransactions.startDate && filterTransactions.endDate)) {
+        const startDate = new Date(filterTransactions.startDate).toLocaleDateString();
+        const endDate = new Date(filterTransactions.endDate).toLocaleDateString();
+        q = query(q, where("date", ">=", startDate), where("date", "<=", endDate));
+        q = query(q, orderBy("date", filterTransactions.filterOrder));
+      }
+      if (filterTransactions.filter == "Amount Range" && (filterTransactions.amountMin || filterTransactions.amountMax)) {
+        const amountMin = parseFloat(filterTransactions.amountMin) || 0;
+        const amountMax = parseFloat(filterTransactions.amountMax) || Infinity;
+        q = query(q, where("amount", ">=", amountMin, where("amount", "<=", amountMax)));
+        q = query(q, orderBy("amount", filterTransactions.filterOrder));
+      }
 
-      // //Add range filters
-      // if (filterExpenses.amountmin && filterExpenses.amountmax) {
-      //   conditions.push(where("amount", ">=", parseFloat(filterExpenses.amountmin)));
-      //   conditions.push(where("amount", "<=", parseFloat(filterExpenses.amountmax)));
-      // } else if (filterExpenses.amountmin) {
-      //   conditions.push(where("amount", ">=", parseFloat(filterExpenses.amountmin)));
-      // } else if (filterExpenses.amountmax) {
-      //   conditions.push(where("amount", "<=", parseFloat(filterExpenses.amountmax)));
-      // }
-
-      // let q;
-      // if (conditions.length > 0) {
-      //   //If there are filters
-      //   q = query(expensesRef, where("user_id", "==", user.uid), ...conditions);
-      // } else {
-      //   //If no filters
-      //   q = query(expensesRef, where("user_id", "==", user.uid));
-      // }
-
-      const q = query(transactionsRef, where("user_id", "==", user.uid), where("account_number", "==", viewedAccount.account_number));
-
+      console.log(filterTransactions)
       const querySnapshot = await getDocs(q);
 
       const transactionsData = querySnapshot.docs.map((doc) => ({
@@ -223,6 +271,7 @@ const TransactionsPage = () => {
               transactions={transactions}
               filterTransactions={filterTransactions}
               handleFilterTransaction={handleFilterTransaction}
+              handleDeleteTransaction={handleDeleteTransaction}
             />
           </>
           
@@ -253,14 +302,41 @@ const TransactionsPage = () => {
                   placeholder="Transaction Name"
                   onChange={handleTransactionForm}
                 />
-                <input
-                  className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
-                  type="text"
+                <select
+                  className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
                   name="category"
                   value={transactionForm.category}
-                  placeholder="Category"
                   onChange={handleTransactionForm}
-                />
+                >
+                  <option value="Custom Category">Custom Category</option>
+                  <option value="Salary/Income">Salary/Income</option>
+                  <option value="Groceries">Groceries</option>
+                  <option value="Rent/Mortgage">Rent/Mortgage</option>
+                  <option value="Transportation">Transportation</option>
+                  <option value="Dining/Restaurant">Dining/Restaurant</option>
+                  <option value="Utilities">Utilities</option>
+                  <option value="Shopping">Shopping</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="Health & Fitness">Health & Fitness</option>
+                  <option value="Loan/Credit Payments">Loan/Credit Payments</option>
+                  <option value="Investment">Investment</option>
+                </select>
+                {transactionForm.customCategory && (
+                  <input
+                    className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
+                    type="text"
+                    name="customCategory"
+                    value={transactionForm.category || ""}
+                    placeholder="Enter Custom Category"
+                    //update customCategory
+                    onChange={(e) =>
+                      setTransactionForm((prevFormData) => ({
+                        ...prevFormData,
+                        category: e.target.value,
+                      }))
+                    }
+                  />
+                )}
                 <input
                   className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
                   type="date"
@@ -291,37 +367,7 @@ const TransactionsPage = () => {
               </div>
             )}
         </>
-        
-        )}   
-
-            {/* <div className="text-5xl">Spent this Month: N/A</div>
-            <div>
-              <button
-                className="w-24 h-8 bg-green-600 rounded-4xl my-5 mr-3"
-                onClick={() => setAddExpense(!addExpense)}
-              >+ Add</button>
-              <button
-                className="w-60 h-8 bg-amber-400 rounded-4xl my-5 mr-3"
-                onClick={() => console.log("upload")}
-              >+ Upload Expenses/Income</button>
-            </div>
-
-            {addExpense ? (
-              <ExpenseForm fetchExpenses={fetchExpenses}/>
-            ) : null}
-
-            <ExpenseList
-              expenses={expenses}
-              filterExpenses={filterExpenses}
-              handleFilterExpenseChange={handleFilterExpenseChange}
-            />
-
-            <div className='text-3xl'>Budget Widgets</div>
-            <BudgetWidget progress={100}/>
-            <div className='text-3xl my-3'>Saving Widgets</div>
-            <SavingWidget progress={50} />
-            <SavingWidget progress={90} /> */
-            }
+        )}
       </div>
     </div>
   );
