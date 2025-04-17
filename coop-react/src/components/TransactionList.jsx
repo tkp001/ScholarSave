@@ -5,7 +5,7 @@ import { FaTrash } from "react-icons/fa";
 const TransactionList = ({ transactions, filterTransactions, handleFilterTransaction, handleDeleteTransaction}) => {
   return (
     <div>
-      <ul className="bg-gray-700 p-2 rounded-3xl my-3 min-w-100">
+      <ul className="bg-gray-700 p-2 rounded-3xl min-w-100">
         <div className="flex flex-col flex-wrap p-1">
           <div>
             <input
@@ -21,8 +21,8 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
                 name="type"
                 onChange={handleFilterTransaction}
               >
-                <option>Income</option>
-                <option selected>Expense</option>
+                <option>Money In</option>
+                <option selected>Money Out</option>
             </select>
             <input
               className="border-2 border-gray-500 rounded-xl m-1 p-1"

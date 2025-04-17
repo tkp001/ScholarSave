@@ -7,7 +7,29 @@ const BalancePage = () => {
   const { user } = useContext(UserContext);
   const [accounts, setAccounts] = useState([]);
   const [viewedAccount, setViewedAccount] = useState(null);
-
+  
+  function fetchAccounts() {
+    const accountsRef = collection(db, "accounts");
+    const q = query(accountsRef, where("user_id", "==", user.uid));
+    getDocs(q)
+      .then((querySnapshot) => {
+        const accounts = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setAccounts(accounts);
+        console.log(accounts);
+      })
+      .catch((error) => {
+        console.error("Error fetching accounts: ", error);
+      });
+  }
+  
+  function changeViewedAccount(e) {
+    const selectedAccountId = e.target.value;
+    const selectedAccount = accounts.find((account) => account.id === selectedAccountId);
+    setViewedAccount(selectedAccount);
+    setNewAccount(false);
+    fetchAccounts();
+  }
+  
   const [newAccount, setNewAccount] = useState();
   const [accountForm, setAccountForm] = useState({
     account_number: "",
@@ -61,26 +83,7 @@ const BalancePage = () => {
     }
   };
 
-  function fetchAccounts() {
-    const accountsRef = collection(db, "accounts");
-    const q = query(accountsRef, where("user_id", "==", user.uid));
-    getDocs(q)
-      .then((querySnapshot) => {
-        const accounts = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        setAccounts(accounts);
-        console.log(accounts);
-      })
-      .catch((error) => {
-        console.error("Error fetching accounts: ", error);
-      });
-  }
   
-  function changeViewedAccount(e) {
-    const selectedAccountId = e.target.value;
-    const selectedAccount = accounts.find((account) => account.id === selectedAccountId);
-    setViewedAccount(selectedAccount);
-    setNewAccount(false);
-  }
 
   useEffect(() => {
     fetchAccounts();
