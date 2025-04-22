@@ -1,127 +1,88 @@
-import React, { useEffect, useState } from 'react';
-import { db } from '../firebaseConfig';
-import { collection, getDocs, addDoc, query, where } from 'firebase/firestore';
-import UserContext from '../UserContext';
-import { useContext } from 'react';
-import ExpenseForm from '../components/ExpenseForm';
-import ExpenseList from '../components/ExpenseList';
-import BudgetWidget from '../components/BudgetWidget';
-import SavingWidget from '../components/SavingWidget';
+<div className="flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white">
+    //   <div className="flex flex-col w-full p-10 max-w-250">
+    //     {/* <>
+    //       <div className="text-2xl">Choose An Account:</div>
+    //       <select
+    //         className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 mb-10 p-1 w-100"
+    //         name="accountSelector"
+    //         onChange={(e) => changeViewedAccount(e)}
+    //       >
+    //         <option value="" disabled selected>
+    //           Select an account
+    //         </option>
+    //         {accounts.map((account) => (
+    //           <option key={account.id} value={account.id}>
+    //             {account.nickname} - {account.account_number} - ${account.balance}
+    //           </option>
+    //         ))}
+    //       </select>
+    //     </>
+    //     <button
+    //       className="w-fit h-8 min-h-8 bg-green-600 rounded-4xl px-2 mr-3"
+    //       onClick={() => setAddBudget(!addBudget)}
+    //     >
+    //       + Add Transaction
+    //     </button> */}
+
+        
+        
+    //     {/* {budgets.map((budget) => (
+    //          <li
+    //             key={budget.id}
+    //           >
+    //             <BudgetWidget name={budget.name} category={budget.category} startDate={budget.start_date} endDate={budget.end_date} amount={budget.amount} progress={100/budget.amount}/>
+    //           </li>
+    //         ))}
+    //   </div> }
+    //   {<div className="text-5xl">Spent this Month: N/A</div>
+    //         <div>
+    //           <button
+    //             className="w-24 h-8 bg-green-600 rounded-4xl my-5 mr-3"
+    //             onClick={() => setAddExpense(!addExpense)}
+    //           >+ Add</button>
+    //           <button
+    //             className="w-60 h-8 bg-amber-400 rounded-4xl my-5 mr-3"
+    //             onClick={() => console.log("upload")}
+    //           >+ Upload Expenses/Income</button>
+    //         </div>
+
+    //         {addExpense ? (
+    //           <ExpenseForm fetchExpenses={fetchExpenses}/>
+    //         ) : null}
+
+    //         <ExpenseList
+    //           expenses={expenses}
+    //           filterExpenses={filterExpenses}
+    //           handleFilterExpenseChange={handleFilterExpenseChange}
+    //         />
+
+    //         <div className='text-3xl'>Budget Widgets</div>
+    //         <BudgetWidget progress={100}/>
+    //         <div className='text-3xl my-3'>Saving Widgets</div>
+    //         <SavingWidget progress={50} />
+    //         <SavingWidget progress={90} />
+    //       } */}
+
+    //   </div>
+    // </div>
 
 
-const TransactionsPage = () => {
-  const { user } = useContext(UserContext);
-
-  const [addExpense, setAddExpense] = useState(false);
-
-
-  const [expenses, setExpenses] = useState([]);
-  const [filterExpenses, setFilterExpenses] = useState({
-    category: "",
-    name: "",
-    date: "",
-    amountmin: "",
-    amountmax: "",
-  });
-
-  const expensesRef = collection(db, "expenses");
-
-  const handleFilterExpenseChange = (e) => {
-    const { name, value } = e.target;
-    setFilterExpenses((prevFormData) => ({
-      ...prevFormData,
-      [name]: value,
-    }));
-  };
-
-  const fetchExpenses = async () => {
-    if (!user || !user.uid) {
-      console.error("User is not authenticated.");
-      return;
-    }
-
-    try {
-      const conditions = [];
-
-      //Add filters
-      if (filterExpenses.category) {
-        conditions.push(where("category", "==", filterExpenses.category));
-      }
-      if (filterExpenses.name) {
-        conditions.push(where("name", "==", filterExpenses.name));
-      }
-      if (filterExpenses.date) {
-        conditions.push(where("date", "==", filterExpenses.date));
-      }
-
-      //Add range filters
-      if (filterExpenses.amountmin && filterExpenses.amountmax) {
-        conditions.push(where("amount", ">=", parseFloat(filterExpenses.amountmin)));
-        conditions.push(where("amount", "<=", parseFloat(filterExpenses.amountmax)));
-      } else if (filterExpenses.amountmin) {
-        conditions.push(where("amount", ">=", parseFloat(filterExpenses.amountmin)));
-      } else if (filterExpenses.amountmax) {
-        conditions.push(where("amount", "<=", parseFloat(filterExpenses.amountmax)));
-      }
-
-      let q;
-      if (conditions.length > 0) {
-        //If there are filters
-        q = query(expensesRef, where("user_id", "==", user.uid), ...conditions);
-      } else {
-        //If no filters
-        q = query(expensesRef, where("user_id", "==", user.uid));
-      }
-
-      const querySnapshot = await getDocs(q);
-
-      const expensesData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setExpenses(expensesData);
-    } catch (error) {
-      console.error("Error fetching expenses:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchExpenses();
-  }, [filterExpenses]);
-
-  return (
-    <div className="flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white">
-      <div className="flex flex-col w-full p-10 max-w-250">
-            <div className="text-5xl">Spent this Month: N/A</div>
-            <div>
-              <button
-                className="w-24 h-8 bg-green-600 rounded-4xl my-5 mr-3"
-                onClick={() => setAddExpense(!addExpense)}
-              >+ Add</button>
-              <button
-                className="w-60 h-8 bg-amber-400 rounded-4xl my-5 mr-3"
-                onClick={() => console.log("upload")}
-              >+ Upload Expenses/Income</button>
-            </div>
-
-            {addExpense ? (
-              <ExpenseForm fetchExpenses={fetchExpenses}/>
-            ) : null}
-
-            <ExpenseList
-              expenses={expenses}
-              filterExpenses={filterExpenses}
-              handleFilterExpenseChange={handleFilterExpenseChange}
-            />
-
-            <div className='text-3xl'>Budget Widgets</div>
-            <BudgetWidget progress={100}/>
-            <div className='text-3xl my-3'>Saving Widgets</div>
-            <SavingWidget progress={50} />
-            <SavingWidget progress={90} />
-      </div>
-    </div>
-  );
-};
-
-export default TransactionsPage;
+    {/* <div className="bg-gray-800 p-4 rounded-xl">
+                      <h4 className="text-xl font-bold">{budget.name}</h4>
+                      <p>Category: {budget.category}</p>
+                      <p>Budgeted Amount: ${budget.amount}</p>
+                      <p>Spent Amount: ${currentAmount.spent}</p>
+                      <p>Gains: ${currentAmount.gains}</p>
+                      <p>
+                        Month/Year:{" "}
+                        {new Date(0, parseInt(budget.month) - 1).toLocaleString(
+                          "default",
+                          { month: "long" }
+                        )}{" "}
+                        {budget.year}
+                      </p>
+                      
+                      <p className="text-sm mt-2">
+                        {progress}% of budget used
+                      </p>
+                    </div> */}

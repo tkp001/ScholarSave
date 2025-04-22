@@ -69,6 +69,8 @@ const TransactionsPage = () => {
     amount: "",
     type: "Money Out",
     description: "",
+    date: "",
+    fullDate: "",
     referrence_id: "",
     currency: "",
     user_id: user.uid,
@@ -82,6 +84,8 @@ const TransactionsPage = () => {
       amount: "",
       type: "Money Out",
       description: "",
+      date: "",
+      fullDate: "",
       referrence_id: "",
       currency: "",
     });
@@ -107,7 +111,7 @@ const TransactionsPage = () => {
 
   const transactionsRef = collection(db, "transactions");
   
-  const fetchTransactions = async () => {
+  async function fetchTransactions() {
     try {
       let q = query(
         transactionsRef,
@@ -444,6 +448,21 @@ const TransactionsPage = () => {
     // const breakdown = await fetchCategoryBreakdown("account123", "2025", "04");
     // console.log(breakdown);
   }
+  
+  // Get the categories for month (for dropdown)
+  function getCategoriesForSelectedDate() {
+    const { date } = transactionForm;
+    const dateFormatted = new Date(date);
+    const year = dateFormatted.getFullYear().toString();
+    const month = (dateFormatted.getMonth() + 1).toString().padStart(2, "0");
+
+    if (!year || !month) return [];
+  
+    const breakdown =
+      viewedAccount?.categoryBreakdown?.[year]?.[month] || {};
+  
+    return Object.keys(breakdown);
+  }
 
   return (
     <div className="flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white">
@@ -482,10 +501,10 @@ const TransactionsPage = () => {
           
           <div className='flex flex-row my-6'>
             <button
-                className="w-fit h-8 min-h-8 bg-green-600 rounded-4xl px-2 mr-3"
-                onClick={() => setAddTransaction(!addTransaction)}
-              >
-                + Add Transaction
+              className="w-fit h-8 min-h-8 bg-green-600 rounded-4xl px-2 mr-3"
+              onClick={() => setAddTransaction(!addTransaction)}
+            >
+              Add Transaction
             </button>
             <button
               className="w-fit h-8 min-h-8 bg-green-600 rounded-4xl px-2"
@@ -525,6 +544,9 @@ const TransactionsPage = () => {
                     onChange={handleTransactionForm}
                   >
                     <option value="Custom Category">Custom Category</option>
+                    <option value="" disabled>
+                    --Default Categories--
+                    </option>
                     <option value="Salary/Income">Salary/Income</option>
                     <option value="Groceries">Groceries</option>
                     <option value="Rent/Mortgage">Rent/Mortgage</option>
@@ -536,6 +558,16 @@ const TransactionsPage = () => {
                     <option value="Health & Fitness">Health & Fitness</option>
                     <option value="Loan/Credit Payments">Loan/Credit Payments</option>
                     <option value="Investment">Investment</option>
+
+                    <option value="" disabled>
+                    --Categories This Month--
+                    </option>
+                    {/* !Change how custom category is handled as these are seen as regular, instead compare category to default categories list IN ADDITION. */}
+                    {getCategoriesForSelectedDate().map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
                   </select>
                   {transactionForm.customCategory && (
                     <input
