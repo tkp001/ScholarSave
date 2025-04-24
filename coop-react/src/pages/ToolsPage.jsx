@@ -3,7 +3,7 @@ import React from 'react'
 const ToolsPage = () => {
   return (
     <div className='flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white'>
-        <div className="flex flex-col items-center w-250 h-400 p-10">
+        <div className="flex flex-col items-center w-full h-400 p-10">
           <div className='text-5xl mb-5'>Financial Tools</div>
           
           <div className='flex flex-col bg-gray-700 w-200 max-h-100 rounded-3xl mb-5'>
