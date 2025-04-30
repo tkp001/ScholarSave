@@ -12,7 +12,7 @@ const AuthService = ({children}) => {
     const location = useLocation();
 
 
-    const { user, setUser } = useContext(UserContext);
+    const { user, updateUser } = useContext(UserContext);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -23,17 +23,17 @@ const AuthService = ({children}) => {
             const uid = user.uid;
             console.log(uid, "signed in")
             console.log(user)
-            setUser(user)
+            updateUser(user)
             // ...
           } else {
             // User is signed out
             console.log("signed out")
-            setUser(null)
+            updateUser(null)
             // ...
           }
           setLoading(false);
         });
-      }, [auth, setUser, loading]);
+      }, [auth, updateUser, loading]);
     
     if (loading) {
       return <div>Checking Access...</div>;

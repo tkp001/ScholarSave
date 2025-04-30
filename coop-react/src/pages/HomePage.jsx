@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useRef } from 'react'; 
+import React, { useContext, useEffect, useState, useRef, use } from 'react'; 
 import UserContext from '../UserContext';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
@@ -6,6 +6,7 @@ import { GoogleGenAI } from "@google/genai";
 import { Bar, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import 'chart.js/auto'; // MUST INCLUDE TO DESTROY UPON UNMOUNTING
+import AccountViewer from '../components/AccountViewer';
 // import { Chart } from 'chart.js/auto';
 
 // Register Chart.js components
@@ -13,26 +14,12 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 const HomePage = () => {
   const { user } = useContext(UserContext);
-  const [accounts, setAccounts] = useState([]);
-  const [viewedAccount, setViewedAccount] = useState(null);
+  const {viewedAccount} = useContext(UserContext);
+  const {updateViewedAccount} = useContext(UserContext);
   const [aiInsight, setAiInsight] = useState(null);
 
   const api = import.meta.env.VITE_API_GOOGLE_GENAI
   const ai = new GoogleGenAI({ apiKey: api });
-
-  function fetchAccounts() {
-    const accountsRef = collection(db, 'accounts');
-    const q = query(accountsRef, where('user_id', '==', user.uid));
-    getDocs(q)
-      .then((querySnapshot) => {
-        const accounts = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        setAccounts(accounts);
-        console.log(accounts);
-      })
-      .catch((error) => {
-        console.error('Error fetching accounts: ', error);
-      });
-  }
 
   // Monthly balance
   function getMonthlyBalanceChange(accountData) {
@@ -150,17 +137,7 @@ const HomePage = () => {
     return color;
   }
 
-  // Fetch accounts on component mount
-  useEffect(() => {
-    fetchAccounts();
-  }, []);
-
-  // Handle account selection
-  function changeViewedAccount(e) {
-    const selectedAccountId = e.target.value;
-    const selectedAccount = accounts.find((account) => account.id === selectedAccountId);
-    setViewedAccount(selectedAccount);
-  }
+  
 
   // Prepare data, provide for charts
   const monthlyBalance = viewedAccount ? getMonthlyBalanceChange(viewedAccount) : [];
@@ -302,23 +279,7 @@ const HomePage = () => {
     <div className='flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white'>
       <div className="flex flex-col w-full h-400 p-10">
         <div className='text-3xl my-3'>Welcome {user.displayName}</div>
-        <div className="text-2xl">Choose An Account:</div>
-        <>
-          <select
-            className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 mb-10 p-1 w-100"
-            name="accountSelector"
-            onChange={(e) => changeViewedAccount(e)}
-          >
-            <option value="" disabled selected>
-              Select an account
-            </option>
-            {accounts.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.nickname} - {account.account_number} - ${account.balance}
-              </option>
-            ))}
-          </select>
-        </>
+        <AccountViewer />
 
         {viewedAccount && (
           <>

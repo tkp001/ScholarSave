@@ -4,44 +4,16 @@ import { collection, getDocs, getDoc, doc, deleteDoc, updateDoc, addDoc, query, 
 import UserContext from '../UserContext';
 import { useContext } from 'react';
 import TransactionList from '../components/TransactionList';
-import BudgetWidget from '../components/BudgetWidget';
-import SavingWidget from '../components/SavingWidget';
+import AccountViewer from '../components/AccountViewer';
 
 
 const TransactionsPage = () => {
   const { user } = useContext(UserContext);
-  const [accounts, setAccounts] = useState([]);
-  const [viewedAccount, setViewedAccount] = useState(null);
-
-  // Accounts
-  function fetchAccounts() {
-      // Get reference to database
-      const accountsRef = collection(db, "accounts");
-      const q = query(accountsRef, where("user_id", "==", user.uid));
-      getDocs(q)
-        .then((querySnapshot) => {
-          // Add id
-          const accounts = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-          setAccounts(accounts);
-          console.log(accounts);
-        })
-        .catch((error) => {
-          console.error("Error fetching accounts: ", error);
-        });
-  }
-    
-  function changeViewedAccount(e) {
-    const selectedAccountId = e.target.value;
-    const selectedAccount = accounts.find((account) => account.id === selectedAccountId);
-    setViewedAccount(selectedAccount);
-    fetchAccounts();
-  }
+  const {viewedAccount} = useContext(UserContext);
+  const {accounts} = useContext(UserContext);
+  const {updateViewedAccount} = useContext(UserContext);
+  const {fetchAccounts} = useContext(UserContext);
   
-  useEffect(() => {
-    fetchAccounts();  
-  }, []);
-
-
   // Transactions
 
   const [addTransaction, setAddTransaction] = useState(false);
@@ -218,7 +190,7 @@ const TransactionsPage = () => {
   };
 
   async function changeAccountBalance(type, amount, accountId, transactionDocRef="N/A") {
-    // fetchAccounts();
+    fetchAccounts();
     if (true) {
       console.log("accountId", accountId);
       const accountDocRef = doc(db, "accounts", accountId);
@@ -314,7 +286,7 @@ const TransactionsPage = () => {
         type: type1,
         account_number: sourceData.account_number,
         user_id: user.uid,
-        date: new Date().toLocaleDateString(),
+        date: new Date(transferForm.date).toLocaleDateString(),
       });
   
       const transactionDocRef2 = await addDoc(transactionsRef, {
@@ -324,7 +296,7 @@ const TransactionsPage = () => {
         type: type2,
         account_number: destinationData.account_number,
         user_id: user.uid,
-        date: new Date().toLocaleDateString(),
+        date: new Date(transferForm.date).toLocaleDateString(),
       });
       
       
@@ -332,8 +304,8 @@ const TransactionsPage = () => {
       // Update account balances
       updateCategoryBreakdown(sourceAccountRef.id, "Transfer", type1, amount, date);
       updateCategoryBreakdown(destinationAccountRef.id, "Transfer", type2, amount, date);
-      changeAccountBalance("Money Out", amount, sourceAccountRef.id, transactionDocRef.id);
-      changeAccountBalance("Money In", amount, destinationAccountRef.id, transactionDocRef2.id);
+      changeAccountBalance(type1, amount, sourceAccountRef.id, transactionDocRef.id);
+      changeAccountBalance(type2, amount, destinationAccountRef.id, transactionDocRef2.id);
 
       alert("Money transferred successfully!");
       resetTransferForm();
@@ -471,25 +443,7 @@ const TransactionsPage = () => {
   return (
     <div className="flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white">
       <div className="flex flex-col w-full p-10 max-w-250">
-        <>
-        <div>{new Date(new Date().toLocaleString()).toLocaleDateString()}</div>
-        <div>Deposit/Withdrawl</div>
-          <div className="text-2xl">Choose An Account:</div>
-          <select
-            className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 mb-10 p-1 w-100"
-            name="accountSelector"
-            onChange={(e) => changeViewedAccount(e)}
-          >
-            <option value="" disabled selected>
-              Select an account
-            </option>
-            {accounts.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.nickname} - {account.account_number} - ${account.balance}
-              </option>
-            ))}
-          </select>
-        </>
+        <AccountViewer />
         
         {viewedAccount && ( 
         <>

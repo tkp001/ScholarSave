@@ -2,40 +2,14 @@ import React, { useEffect, useState, useContext } from 'react';
 import { db } from '../firebaseConfig';
 import { collection, getDocs, getDoc, doc, query, where, addDoc, deleteDoc } from 'firebase/firestore';
 import UserContext from '../UserContext';
+import AccountViewer from '../components/AccountViewer';
 
 const BalancePage = () => {
   const { user } = useContext(UserContext);
-  const [accounts, setAccounts] = useState([]);
-  const [viewedAccount, setViewedAccount] = useState(null);
+  const {viewedAccount} = useContext(UserContext);
+  const {updateViewedAccount} = useContext(UserContext);
   const [lastTransactionDetails, setLastTransactionDetails] = useState(null);
-  
-  function fetchAccounts() {
-    const accountsRef = collection(db, "accounts");
-    const q = query(accountsRef, where("user_id", "==", user.uid));
-    getDocs(q)
-      .then((querySnapshot) => {
-        const accounts = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        setAccounts(accounts);
-        console.log(accounts);
-      })
-      .catch((error) => {
-        console.error("Error fetching accounts: ", error);
-      });
-  }
-  
-  function changeViewedAccount(e) {
-    const selectedAccountId = e.target.value;
-    const selectedAccount = accounts.find((account) => account.id === selectedAccountId);
-    setViewedAccount(selectedAccount);
-    setNewAccount(false);
-    fetchAccounts();
-
-    if (selectedAccount?.last_transaction) {
-      fetchLastTransaction(selectedAccount.last_transaction);
-    } else {
-      setLastTransactionDetails(null);
-    }
-  }
+  const {fetchAccounts} = useContext(UserContext);
 
   async function fetchLastTransaction(transactionId) {
     if (!transactionId || transactionId === "N/A") {
@@ -58,6 +32,12 @@ const BalancePage = () => {
       setLastTransactionDetails(null);
     }
   }
+
+  useEffect(() => {
+    if (viewedAccount) {
+      fetchLastTransaction(viewedAccount.last_transaction);
+    }
+  }, [viewedAccount]);
   
   const [newAccount, setNewAccount] = useState();
   const [accountForm, setAccountForm] = useState({
@@ -104,7 +84,7 @@ const BalancePage = () => {
         const accountDocRef = doc(db, "accounts", viewedAccount.id);
         await deleteDoc(accountDocRef);
         alert("Account deleted successfully!");
-        setViewedAccount(null);
+        updateViewedAccount(null);
         fetchAccounts();
       } catch (error) {
         console.error("Error deleting account: ", error);
@@ -112,32 +92,11 @@ const BalancePage = () => {
     }
   };
 
-  
-
-  useEffect(() => {
-    fetchAccounts();
-  }, []);
 
   return (
     <div className="flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white">
       <div className="flex flex-col w-full h-400 p-10">
-        <>
-          <div className="text-2xl">Choose An Account:</div>
-          <select
-            className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 mb-10 p-1 w-100"
-            name="accountSelector"
-            onChange={(e) => changeViewedAccount(e)}
-          >
-            <option value="" disabled selected>
-              Select an account
-            </option>
-            {accounts.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.nickname} - {account.account_number}
-              </option>
-            ))}
-          </select>
-        </>
+        <AccountViewer />
         
 
         {viewedAccount ? (

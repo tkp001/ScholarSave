@@ -6,32 +6,13 @@ import { useContext } from 'react';
 
 import BudgetWidget from '../components/BudgetWidget';
 import SavingWidget from '../components/SavingWidget';
+import AccountViewer from '../components/AccountViewer';
 
 const AllowancePage = () => {
   const { user } = useContext(UserContext);
-  const [accounts, setAccounts] = useState([]);
-  const [viewedAccount, setViewedAccount] = useState(null);
-  
-  function fetchAccounts() {
-    const accountsRef = collection(db, "accounts");
-    const q = query(accountsRef, where("user_id", "==", user.uid));
-    getDocs(q)
-      .then((querySnapshot) => {
-        const accounts = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-        setAccounts(accounts);
-        console.log(accounts);
-      })
-      .catch((error) => {
-        console.error("Error fetching accounts: ", error);
-      });
-  }
-  
-  function changeViewedAccount(e) {
-    const selectedAccountId = e.target.value;
-    const selectedAccount = accounts.find((account) => account.id === selectedAccountId);
-    setViewedAccount(selectedAccount);
-    fetchAccounts();
-  }
+  const {accounts} = useContext(UserContext);
+  const {viewedAccount} = useContext(UserContext);
+  const {fetchAccounts} = useContext(UserContext);
 
   const [addBudget, setAddBudget] = useState(false);
   const [budgets, setBudgets] = useState([]);
@@ -53,10 +34,6 @@ const AllowancePage = () => {
       }));
       console.log(budgetForm);
     };
-
-  useEffect(() => {
-    fetchAccounts();
-  }, []);
 
   // Extra function
   function getAvailableYearsAndMonths(categoryBreakdown) {
@@ -191,7 +168,7 @@ const AllowancePage = () => {
 
 
   // Savings
-  
+
   const [savings, setSavings] = useState([]);
   const [addSaving, setAddSaving] = useState(false);
   const [savingForm, setSavingForm] = useState({
@@ -261,23 +238,7 @@ const AllowancePage = () => {
   return (
     <div className="flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white">
       <div className="flex flex-col w-full p-10 max-w-250">
-        <>
-          <div className="text-2xl">Choose An Account:</div>
-          <select
-            className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-100"
-            name="accountSelector"
-            onChange={(e) => changeViewedAccount(e)}
-          >
-            <option value="" disabled selected>
-              Select an account
-            </option>
-            {accounts.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.nickname} - {account.account_number} - ${account.balance}
-              </option>
-            ))}
-          </select>
-        </>
+        <AccountViewer />
 
         {viewedAccount && (
           <>
