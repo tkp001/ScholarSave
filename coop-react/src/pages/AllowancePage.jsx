@@ -58,6 +58,7 @@ const AllowancePage = () => {
     fetchAccounts();
   }, []);
 
+  // Extra function
   function getAvailableYearsAndMonths(categoryBreakdown) {
     if (!categoryBreakdown) return { years: [], months: [] };
   
@@ -186,6 +187,11 @@ const AllowancePage = () => {
     }
   }
 
+
+
+
+  // Savings
+  
   const [savings, setSavings] = useState([]);
   const [addSaving, setAddSaving] = useState(false);
   const [savingForm, setSavingForm] = useState({
@@ -272,8 +278,6 @@ const AllowancePage = () => {
             ))}
           </select>
         </>
-        
-        
 
         {viewedAccount && (
           <>

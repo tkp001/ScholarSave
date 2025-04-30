@@ -8,14 +8,17 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
       <ul className="bg-gray-700 p-2 rounded-3xl min-w-100">
         <div className="flex flex-col flex-wrap p-1">
           <div>
-            <input
-              className="border-2 border-gray-500 rounded-xl m-1 p-1 w-70"
-              type="text"
-              name="name"
-              value={filterTransactions.name}
-              placeholder="Search Records"
-              onChange={handleFilterTransaction}
-            />
+          <select
+                className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-60"
+                name="filter"
+                value={filterTransactions.filter}
+                onChange={handleFilterTransaction}
+              >
+                <option>Name and Category</option>
+                <option selected>Date</option>
+                <option selected>Date Range</option>
+                <option selected>Amount Range</option>
+            </select>
             <select
                 className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-40"
                 name="type"
@@ -24,29 +27,32 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
                 <option>Money In</option>
                 <option selected>Money Out</option>
             </select>
-            <input
-              className="border-2 border-gray-500 rounded-xl m-1 p-1"
-              type="text"
-              name="category"
-              value={filterTransactions.category}
-              placeholder="Category"
-              onChange={handleFilterTransaction}
-            />
+
+            {filterTransactions.filter == 'Name and Category' && (
+              <div className='flex flex-row'>
+                <input
+                  className="border-2 border-gray-500 rounded-xl m-1 p-1 w-70"
+                  type="text"
+                  name="name"
+                  value={filterTransactions.name}
+                  placeholder="Search Records"
+                  onChange={handleFilterTransaction}
+                />
+                
+                <input
+                  className="border-2 border-gray-500 rounded-xl m-1 p-1"
+                  type="text"
+                  name="category"
+                  value={filterTransactions.category}
+                  placeholder="Category"
+                  onChange={handleFilterTransaction}
+                />
+              </div>
+            )}
+
           </div>
           <div>
-            <select
-                className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-40"
-                name="filter"
-                value={filterTransactions.filter}
-                onChange={handleFilterTransaction}
-              >
-                <option>No Filter</option>
-                <option selected>Date</option>
-                <option selected>Date Range</option>
-                <option selected>Amount Range</option>
-            </select>
-            
-            
+                  
             {filterTransactions.filter == 'Date' && (
               <input
               className="border-2 border-gray-500 rounded-xl m-1 p-1"
@@ -94,7 +100,7 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
                 /> 
               </>
             )}   
-            {filterTransactions.filter != 'No Filter' && filterTransactions.filter != 'Date' && (
+            {filterTransactions.filter != 'Name and Category' && filterTransactions.filter != 'Date' && (
               <select
               className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-20"
               name="filterOrder"
@@ -114,7 +120,7 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
           <div>Amount</div>
         </div>
         <div className="flex flex-nowrap overflow-auto no-scrollbar items-center">
-          <div className="flex flex-col w-full h-30">
+          <div className="flex flex-col w-full h-60">
             {transactions.map((transaction) => (
               <li
                 key={transaction.id}

@@ -6,6 +6,7 @@ import { signOut } from "firebase/auth";
 import { useState, useContext } from 'react';
 import UserContext from '../UserContext';
 import { Navigate, useLocation } from 'react-router-dom';
+import { SiSemanticscholar } from "react-icons/si";
 
 //currently only page that uses firebase auth commands
 
@@ -86,7 +87,8 @@ const AuthPage = () => {
 
   return (
     <>
-    <div className='flex flex-col w-screen h-screen items-center p-10'>
+    <div className='flex flex-col w-screen h-screen items-center p-10 text-white bg-gray-700'>
+      <div className='py-2'><SiSemanticscholar size={230} /></div>
       <h1 className='text-6xl tracking-tighter text-balance mb-10'>{user ? `Welcome ${user.displayName}` : "Sign In / Sign Up"}</h1>
 
       {user ? null :

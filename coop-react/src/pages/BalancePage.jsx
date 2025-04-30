@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { db } from '../firebaseConfig';
-import { collection, getDocs, doc, query, where, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, query, where, addDoc, deleteDoc } from 'firebase/firestore';
 import UserContext from '../UserContext';
 
 const BalancePage = () => {
   const { user } = useContext(UserContext);
   const [accounts, setAccounts] = useState([]);
   const [viewedAccount, setViewedAccount] = useState(null);
+  const [lastTransactionDetails, setLastTransactionDetails] = useState(null);
   
   function fetchAccounts() {
     const accountsRef = collection(db, "accounts");
@@ -28,6 +29,34 @@ const BalancePage = () => {
     setViewedAccount(selectedAccount);
     setNewAccount(false);
     fetchAccounts();
+
+    if (selectedAccount?.last_transaction) {
+      fetchLastTransaction(selectedAccount.last_transaction);
+    } else {
+      setLastTransactionDetails(null);
+    }
+  }
+
+  async function fetchLastTransaction(transactionId) {
+    if (!transactionId || transactionId === "N/A") {
+      setLastTransactionDetails(null);
+      return;
+    }
+  
+    try {
+      const transactionDocRef = doc(db, "transactions", transactionId);
+      const transactionDoc = await getDoc(transactionDocRef);
+  
+      if (transactionDoc.exists()) {
+        setLastTransactionDetails(transactionDoc.data());
+      } else {
+        console.error("Transaction not found.");
+        setLastTransactionDetails(null);
+      }
+    } catch (error) {
+      console.error("Error fetching transaction details: ", error);
+      setLastTransactionDetails(null);
+    }
   }
   
   const [newAccount, setNewAccount] = useState();
@@ -120,7 +149,17 @@ const BalancePage = () => {
             <div className="text-2xl mb-10">{viewedAccount.last_modified}</div>
 
             <div className="text-3xl">Last Transaction</div>
-            <div className="text-2xl">{viewedAccount.last_transaction}</div>
+            {lastTransactionDetails ? (
+              <div className="text-2xl mb-10">
+                <p className='text-sm'>ID: {viewedAccount.last_transaction}</p>
+                <p>Name:  {lastTransactionDetails.name}</p>
+                <p>Amount: ${lastTransactionDetails.amount}</p>
+                <p>Category: {lastTransactionDetails.category}</p>
+                
+              </div>
+            ) : (
+              <div className="text-2xl mb-10">No transaction details available.</div>
+            )}
 
             <button
               className="w-fit h-8 bg-red-600 rounded-4xl px-2 my-5"

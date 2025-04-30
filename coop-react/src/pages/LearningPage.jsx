@@ -28,7 +28,8 @@ async function askQuestion(q) {
     setChatQuestion("");
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash",
-      contents: q + " : provide a detailed answer, but not too long and directly answer the question. Also provide a large title with different heading, categorize info under sections and draw a image using text. Provide main website links for more information. Add a disclaimer.",
+      temperature: 0.2,
+      contents: "DO NOT ANSWER ANY QUESTIONS  UNRELATED TO FINANCE. Question:" + q + " : provide a detailed answer, but not too long and directly answer the question. Also provide a large title with different heading, categorize info under sections and draw a image using text. Provide main website links for more information. Add a disclaimer.",
     });
     console.log(response.text);
     setResponse(response.text);
@@ -50,7 +51,7 @@ async function askChat(chatQuestion) {
   try {
     const chatResponse = await ai.models.generateContent({
       model: "gemini-2.0-flash",
-      contents: `Based on the following response: "${response}", answer the follow-up question: "${chatQuestion}". Provide a clear answer.`,
+      contents: `DO NOT ANSWER ANY QUESTIONS UNRELATED TO FINANCE. Based on the following response: "${response}", answer the follow-up question: "${chatQuestion}". Provide a clear answer.`,
     });
 
     console.log("Chat Response:", chatResponse.text);
@@ -229,7 +230,7 @@ return (
           {/* <div className='text-3xl mb-5'>Suggested Topics</div>
           <div className='flex flex-col bg-gray-700  w-170 h-100 max-h-100 rounded-3xl mb-5 p-5'>
             <div className='text-3xl mb-2'>Title</div>
-            <div className='flex flew-grow overflow-auto text-xl'>Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description Description </div>
+            <div className='flex flew-grow overflow-auto text-xl'>Description Description Description Description Description </div>
             <div className=''></div>
           </div> */}
         </div>

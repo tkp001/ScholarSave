@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { db } from '../firebaseConfig';
 import { collection, getDocs, getDoc, doc, deleteDoc, updateDoc, addDoc, query, where, orderBy } from 'firebase/firestore';
 import UserContext from '../UserContext';
@@ -28,7 +28,7 @@ const TransactionsPage = () => {
         .catch((error) => {
           console.error("Error fetching accounts: ", error);
         });
-    }
+  }
     
   function changeViewedAccount(e) {
     const selectedAccountId = e.target.value;
@@ -53,7 +53,7 @@ const TransactionsPage = () => {
     category: "",
     
     type: "Money Out",
-    filter: "No Filter",
+    filter: "Name and Category",
     filterOrder: "asc",
     date: "",
     startDate: "",
@@ -120,12 +120,13 @@ const TransactionsPage = () => {
         where("type", "==", filterTransactions.type)
       );
 
-      // Add parameters are required
-      if (filterTransactions.name) {
-        q = query(q, where("name", "==", filterTransactions.name));
-      }
-      if (filterTransactions.category) {
-        q = query(q, where("category", "==", filterTransactions.category));
+      if (filterTransactions.filter == "Name and Category" && (filterTransactions.name || filterTransactions.category)) {
+        if (filterTransactions.name) {
+          q = query(q, where("name", "==", filterTransactions.name));
+        }
+        if (filterTransactions.category) {
+          q = query(q, where("category", "==", filterTransactions.category));
+        }
       }
       
       if (filterTransactions.filter == "Date" && filterTransactions.date) {
@@ -135,13 +136,15 @@ const TransactionsPage = () => {
       if (filterTransactions.filter == "Date Range" && (filterTransactions.startDate && filterTransactions.endDate)) {
         const startDate = new Date(filterTransactions.startDate).toLocaleDateString();
         const endDate = new Date(filterTransactions.endDate).toLocaleDateString();
-        q = query(q, where("date", ">=", startDate), where("date", "<=", endDate));
+        q = query(q, where("date", ">=", startDate));
+        q = query(q, where("date", "<=", endDate));
         q = query(q, orderBy("date", filterTransactions.filterOrder));
       }
       if (filterTransactions.filter == "Amount Range" && (filterTransactions.amountMin || filterTransactions.amountMax)) {
         const amountMin = parseFloat(filterTransactions.amountMin) || 0;
         const amountMax = parseFloat(filterTransactions.amountMax) || Infinity;
-        q = query(q, where("amount", ">=", amountMin, where("amount", "<=", amountMax)));
+        q = query(q, where("amount", ">=", amountMin));
+        q = query(q, where("amount", "<=", amountMax));
         q = query(q, orderBy("amount", filterTransactions.filterOrder));
       }
 
@@ -342,7 +345,7 @@ const TransactionsPage = () => {
   }
 
   async function handleAddTransaction() {
-    // Add transaction manually from trnasactionForm
+    // Add transaction manually from transactionForm
     if (!transactionForm.name || !transactionForm.category || !transactionForm.date || !transactionForm.amount) {
       alert("All fields are required. Please fill out the form completely.");
       return;
@@ -426,6 +429,7 @@ const TransactionsPage = () => {
     await updateDoc(accountDocRef, { categoryBreakdown });
   }
 
+  // Extra function
   async function fetchCategoryBreakdown(accountId, year, month) {
     const accountDocRef = doc(db, "accounts", accountId);
   
@@ -449,7 +453,7 @@ const TransactionsPage = () => {
     // console.log(breakdown);
   }
   
-  // Get the categories for month (for dropdown)
+  // Get the categories for month (for dropdown, makes UI easier)
   function getCategoriesForSelectedDate() {
     const { date } = transactionForm;
     const dateFormatted = new Date(date);
@@ -469,6 +473,7 @@ const TransactionsPage = () => {
       <div className="flex flex-col w-full p-10 max-w-250">
         <>
         <div>{new Date(new Date().toLocaleString()).toLocaleDateString()}</div>
+        <div>Deposit/Withdrawl</div>
           <div className="text-2xl">Choose An Account:</div>
           <select
             className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 mb-10 p-1 w-100"

@@ -32,7 +32,7 @@ const SavingWidget = ({
             </div>
             
             {/* <div className='flex items-center justify-center bg-gray-500 rounded-full w-15 h-15 mr-5'><MdEdit size={40} /></div> */}
-            <div onClick={() => handleDeleteSaving(saving.id)} className='flex items-center justify-center bg-gray-500 rounded-full w-15 h-15 mr-5'><FaTrash size={30} /></div>
+            <div onClick={() => handleDeleteSaving(saving.id)} className='flex items-center justify-center bg-gray-500 rounded-full w-15 min-w-15 h-15 mr-5'><FaTrash size={30} /></div>
         </div>
     </div>
   )

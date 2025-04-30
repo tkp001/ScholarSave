@@ -121,7 +121,7 @@ const SettingsPage = () => {
               <div className='flex flex-col justify-center bg-gray-700 w-fit p-2 h-8 rounded-xl my-1' onClick={authSignout}>Logout</div>
               
               <div className='flex flex-col justify-center bg-red-700 w-fit p-2 h-8 rounded-xl my-1' onClick={endService}>Delete Account</div>
-              <div className='flex flex-col justify-center bg-red-700 w-fit p-2 h-8 rounded-xl my-1' onClick={() => console.log("click")}>Delete Data</div>
+              {/* <div className='flex flex-col justify-center bg-red-700 w-fit p-2 h-8 rounded-xl my-1' onClick={() => console.log("click")}>Delete Data</div> */}
 
               {/* <div className='text-4xl mt-10 my-4'>Customization</div>
               <div className='flex flex-row items-center my-1'>
