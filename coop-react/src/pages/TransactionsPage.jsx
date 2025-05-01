@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { use, useEffect, useState } from 'react';
 import { db } from '../firebaseConfig';
 import { collection, getDocs, getDoc, doc, deleteDoc, updateDoc, addDoc, query, where, orderBy } from 'firebase/firestore';
 import UserContext from '../UserContext';
@@ -24,8 +24,8 @@ const TransactionsPage = () => {
     name: "",
     category: "",
     
-    type: "Money Out",
-    filter: "Name and Category",
+    type: "Withdrawl",
+    filter: "None",
     filterOrder: "asc",
     date: "",
     startDate: "",
@@ -39,13 +39,12 @@ const TransactionsPage = () => {
     category: "Salary/Income",
     customCategory: false,
     amount: "",
-    type: "Money Out",
+    type: "Withdrawl",
     description: "",
     date: "",
     fullDate: "",
     referrence_id: "",
     currency: "",
-    user_id: user.uid,
   });
 
   function resetTransactionForm() {
@@ -54,7 +53,7 @@ const TransactionsPage = () => {
       category: "Salary/Income",
       customCategory: false,
       amount: "",
-      type: "Money Out",
+      type: "Withdrawl",
       description: "",
       date: "",
       fullDate: "",
@@ -67,7 +66,7 @@ const TransactionsPage = () => {
     sourceAccount: "",
     destinationAccount: "",
     amount: "",
-    type: "Money Out",
+    type: "Withdrawl",
     date: "",
   });
 
@@ -76,7 +75,7 @@ const TransactionsPage = () => {
       sourceAccount: "",
       destinationAccount: "",
       amount: "",
-      type: "Money Out",
+      type: "Withdrawl",
       date: "",
     });
   }
@@ -92,14 +91,16 @@ const TransactionsPage = () => {
         where("type", "==", filterTransactions.type)
       );
 
-      if (filterTransactions.filter == "Name and Category" && (filterTransactions.name || filterTransactions.category)) {
-        if (filterTransactions.name) {
-          q = query(q, where("name", "==", filterTransactions.name));
-        }
-        if (filterTransactions.category) {
-          q = query(q, where("category", "==", filterTransactions.category));
-        }
-      }
+      // if (filterTransactions.filter == "Name and Category" && (filterTransactions.name || filterTransactions.category)) {
+      
+      // }
+
+      // if (filterTransactions.name) {
+      //   q = query(q, where("name", "==", filterTransactions.name));
+      // }
+      // if (filterTransactions.category) {
+      //   q = query(q, where("category", "==", filterTransactions.category));
+      // }
       
       if (filterTransactions.filter == "Date" && filterTransactions.date) {
         const date = new Date(filterTransactions.date);
@@ -127,7 +128,20 @@ const TransactionsPage = () => {
         id: doc.id,
         ...doc.data(),
       }));
-      setTransactions(transactionsData);
+
+      // Perform local filtering for name and category
+      const filteredTransactions = transactionsData.filter((transaction) => {
+        const matchesName = filterTransactions.name
+          ? transaction.name.toLowerCase().includes(filterTransactions.name.toLowerCase())
+          : true;
+        const matchesCategory = filterTransactions.category
+          ? transaction.category.toLowerCase().includes(filterTransactions.category.toLowerCase())
+          : true;
+
+        return matchesName && matchesCategory;
+      });
+
+      setTransactions(filteredTransactions); // Local filtering
     } catch (error) {
       console.error("Error fetching transactions:", error);
     }
@@ -149,6 +163,20 @@ const TransactionsPage = () => {
       ...prevFormData,
       [name]: value,
     }));
+
+    if (name === "amount") {
+      if (parseFloat(value) < 0) {
+        setTransferForm((prevFormData) => ({
+          ...prevFormData,
+          type: "Withdrawl",
+        }));
+      } else {
+        setTransferForm((prevFormData) => ({
+          ...prevFormData,
+          type: "Deposit",
+        }));
+      }
+    }
 
     console.log("filterTransactions", filterTransactions);
   };
@@ -186,47 +214,149 @@ const TransactionsPage = () => {
       }));
     }
 
+    if (name === "amount") {
+      if (parseFloat(value) < 0) {
+        setTransactionForm((prevFormData) => ({
+          ...prevFormData,
+          type: "Withdrawl",
+        }));
+      } else {
+        setTransactionForm((prevFormData) => ({
+          ...prevFormData,
+          type: "Deposit",
+        }));
+      }
+    }
+    
+
     console.log("transactionForm", transactionForm);
   };
 
-  async function changeAccountBalance(type, amount, accountId, transactionDocRef="N/A") {
+  async function changeAccountBalance(amount, accountId, transactionDocRef = "N/A") {
     fetchAccounts();
-    if (true) {
-      console.log("accountId", accountId);
-      const accountDocRef = doc(db, "accounts", accountId);
-
-      // FETCH MOST UPDATED DATA
-      const accountSnapshot = await getDoc(accountDocRef);
-      const accountData = accountSnapshot.data();
-      console.log("accountData", accountData);
-      
-      
-      let newBalance;
-      if (type == "Money Out") {
-        newBalance = parseFloat(accountData.balance) - parseFloat(amount);
-        console.log("Money Out");
-      } else if (type == "Money In") {
-        newBalance = parseFloat(accountData.balance) + parseFloat(amount);
-        console.log("Money In");
-      } else newBalance = parseFloat(accountData.balance);
-
-      console.log("accountData.balance", accountData.balance);
-      console.log("amount", amount);
-      console.log("newBalance", newBalance);
-
-      // Update the last modified and last transaction for the account
-      await updateDoc(accountDocRef, {
-        balance: newBalance,
-        last_modified: new Date().toLocaleString(),
-        last_transaction: transactionDocRef,
-      });
+    const accountDocRef = doc(db, "accounts", accountId);
+  
+    // Fetch the most updated data
+    const accountSnapshot = await getDoc(accountDocRef);
+    const accountData = accountSnapshot.data();
+  
+    let newBalance;
+    if (parseFloat(amount) < 0) {
+      // Withdrawl
+      newBalance = parseFloat(accountData.balance) + parseFloat(amount); // Subtract amount
+      console.log("Withdrawl");
+    } else {
+      // Deposit
+      newBalance = parseFloat(accountData.balance) + parseFloat(amount); // Add amount
+      console.log("Deposit");
     }
+  
+    console.log("accountData.balance", accountData.balance);
+    console.log("amount", amount);
+    console.log("newBalance", newBalance);
+  
+    // Update the last modified and last transaction for the account
+    await updateDoc(accountDocRef, {
+      balance: newBalance,
+      last_modified: new Date().toLocaleString(),
+      last_transaction: transactionDocRef,
+    });
+  
     fetchAccounts();
     fetchTransactions();
   }
   
+  // async function handleTransferMoney() {
+  //   const { sourceAccount, destinationAccount, type, amount, date } = transferForm;
+  
+  //   // Validate inputs
+  //   if (!sourceAccount || !destinationAccount || !amount || !date) {
+  //     alert("Please fill out all fields.");
+  //     return;
+  //   }
+  //   if (sourceAccount === destinationAccount) {
+  //     alert("Source and destination accounts cannot be the same.");
+  //     return;
+  //   }
+  
+  //   try {
+  //     // Fetch source and account documents
+  //     const sourceAccountRef = doc(db, "accounts", sourceAccount);
+  //     const destinationAccountRef = doc(db, "accounts", destinationAccount);
+  //     const sourceSnapshot = await getDoc(sourceAccountRef);
+  //     const destinationSnapshot = await getDoc(destinationAccountRef);
+  
+  //     if (!sourceSnapshot.exists() || !destinationSnapshot.exists()) {
+  //       alert("One or both accounts do not exist.");
+  //       return;
+  //     }
+  
+  //     const sourceData = sourceSnapshot.data();
+  //     const destinationData = destinationSnapshot.data();
+
+  //     console.log("sourceData", sourceData);
+  //     console.log("destinationData", destinationData);
+  //     console.log("sourceSnapshot", sourceSnapshot);
+  //     console.log("destinationSnapshot", destinationSnapshot);
+  
+  //     // if (parseFloat(sourceData.balance) < parseFloat(amount)) {
+  //     //   alert("Insufficient balance in the source account.");
+  //     //   return;
+  //     // }
+  
+  //     // Log the transfer as a transaction
+  //     const transactionsRef = collection(db, "transactions");
+  //     let type1;
+  //     let type2;
+
+  //     if (parseFloat(amount) < 0) {
+  //       type1 = "Withdrawl";
+  //       type2 = "Deposit";
+  //     } else {
+  //       type1 = "Deposit";
+  //       type2 = "Withdrawl";
+  //     }
+
+  //     // Transaction
+  //     const transactionDocRef = await addDoc(transactionsRef, {
+  //       name: "Transfer to " + destinationData.account_number,
+  //       category: "Transfer",
+  //       amount: parseFloat(amount),
+  //       type: type1,
+  //       account_number: sourceData.account_number,
+  //       user_id: user.uid,
+  //       date: new Date(transferForm.date).toLocaleDateString(),
+  //     });
+  
+  //     const transactionDocRef2 = await addDoc(transactionsRef, {
+  //       name: "Transfer from " + sourceData.account_number,
+  //       category: "Transfer",
+  //       amount: parseFloat(amount),
+  //       type: type2,
+  //       account_number: destinationData.account_number,
+  //       user_id: user.uid,
+  //       date: new Date(transferForm.date).toLocaleDateString(),
+  //     });
+      
+      
+
+  //     // Update account balances
+  //     updateCategoryBreakdown(sourceAccountRef.id, "Transfer", type1, amount, date);
+  //     updateCategoryBreakdown(destinationAccountRef.id, "Transfer", type2, amount, date);
+  //     changeAccountBalance(type1, amount, sourceAccountRef.id, transactionDocRef.id);
+  //     changeAccountBalance(type2, amount, destinationAccountRef.id, transactionDocRef2.id);
+
+  //     alert("Money transferred successfully!");
+  //     resetTransferForm();
+  //     setTransferMoney(false);
+  //   } catch (error) {
+  //     console.error("Error transferring money:", error);
+  //     alert("An error occurred while transferring money.");
+  //   }
+  // }
+
   async function handleTransferMoney() {
-    const { sourceAccount, destinationAccount, type, amount, date } = transferForm;
+    const { sourceAccount, destinationAccount, amount, date } = transferForm;
   
     // Validate inputs
     if (!sourceAccount || !destinationAccount || !amount || !date) {
@@ -239,11 +369,14 @@ const TransactionsPage = () => {
     }
   
     try {
-      // Fetch source and account documents
+      // Fetch source and destination account documents
       const sourceAccountRef = doc(db, "accounts", sourceAccount);
       const destinationAccountRef = doc(db, "accounts", destinationAccount);
-      const sourceSnapshot = await getDoc(sourceAccountRef);
-      const destinationSnapshot = await getDoc(destinationAccountRef);
+  
+      const [sourceSnapshot, destinationSnapshot] = await Promise.all([
+        getDoc(sourceAccountRef),
+        getDoc(destinationAccountRef),
+      ]);
   
       if (!sourceSnapshot.exists() || !destinationSnapshot.exists()) {
         alert("One or both accounts do not exist.");
@@ -252,61 +385,54 @@ const TransactionsPage = () => {
   
       const sourceData = sourceSnapshot.data();
       const destinationData = destinationSnapshot.data();
-
-      console.log("sourceData", sourceData);
-      console.log("destinationData", destinationData);
-      console.log("sourceSnapshot", sourceSnapshot);
-      console.log("destinationSnapshot", destinationSnapshot);
   
-      // if (parseFloat(sourceData.balance) < parseFloat(amount)) {
-      //   alert("Insufficient balance in the source account.");
-      //   return;
-      // }
-  
-      // Log the transfer as a transaction
+      // Log the transfer as transactions
       const transactionsRef = collection(db, "transactions");
+
       let type1;
       let type2;
 
-      if (type == "Money Out") {
-        type1 = "Money Out";
-        type2 = "Money In";
-      } else if (type == "Money In") {
-        type1 = "Money In";
-        type2 = "Money Out";
+      if (parseFloat(amount) < 0) {
+        type1 = "Withdrawl";
+        type2 = "Deposit";
       } else {
-        return;
+        type1 = "Deposit";
+        type2 = "Withdrawl";
       }
 
-      // Transaction
-      const transactionDocRef = await addDoc(transactionsRef, {
-        name: "Transfer to " + destinationData.account_number,
-        category: "Transfer",
-        amount: parseFloat(amount),
-        type: type1,
-        account_number: sourceData.account_number,
-        user_id: user.uid,
-        date: new Date(transferForm.date).toLocaleDateString(),
-      });
+      const transactionData = [
+        {
+          name: `Transfer to ${destinationData.account_number}`,
+          category: "Transfer",
+          amount: -Math.abs(parseFloat(amount)), // Negative for source
+          type: type1,
+          account_number: sourceData.account_number,
+          user_id: user.uid,
+          date: new Date(date).toLocaleDateString(),
+        },
+        {
+          name: `Transfer from ${sourceData.account_number}`,
+          category: "Transfer",
+          amount: Math.abs(parseFloat(amount)), // Positive for destination
+          type: type2,
+          account_number: destinationData.account_number,
+          user_id: user.uid,
+          date: new Date(date).toLocaleDateString(),
+        },
+      ];
   
-      const transactionDocRef2 = await addDoc(transactionsRef, {
-        name: "Transfer from " + sourceData.account_number,
-        category: "Transfer",
-        amount: parseFloat(amount),
-        type: type2,
-        account_number: destinationData.account_number,
-        user_id: user.uid,
-        date: new Date(transferForm.date).toLocaleDateString(),
-      });
-      
-      
-
-      // Update account balances
-      updateCategoryBreakdown(sourceAccountRef.id, "Transfer", type1, amount, date);
-      updateCategoryBreakdown(destinationAccountRef.id, "Transfer", type2, amount, date);
-      changeAccountBalance(type1, amount, sourceAccountRef.id, transactionDocRef.id);
-      changeAccountBalance(type2, amount, destinationAccountRef.id, transactionDocRef2.id);
-
+      const [sourceTransaction, destinationTransaction] = await Promise.all(
+        transactionData.map((data) => addDoc(transactionsRef, data))
+      );
+  
+      // Update account balances and category breakdowns
+      await Promise.all([
+        updateCategoryBreakdown(sourceAccountRef.id, "Transfer", -amount, date),
+        updateCategoryBreakdown(destinationAccountRef.id, "Transfer", amount, date),
+        changeAccountBalance(-amount, sourceAccountRef.id, sourceTransaction.id),
+        changeAccountBalance(amount, destinationAccountRef.id, destinationTransaction.id),
+      ]);
+  
       alert("Money transferred successfully!");
       resetTransferForm();
       setTransferMoney(false);
@@ -317,45 +443,67 @@ const TransactionsPage = () => {
   }
 
   async function handleAddTransaction() {
-    // Add transaction manually from transactionForm
-    if (!transactionForm.name || !transactionForm.category || !transactionForm.date || !transactionForm.amount) {
+    const { name, category, date, amount } = transactionForm;
+  
+    // Validate inputs
+    if (!name || !category || !date || !amount) {
       alert("All fields are required. Please fill out the form completely.");
       return;
     }
-
+  
     try {
       const transactionsRef = collection(db, "transactions");
-      const transactionDocRef = await addDoc(transactionsRef, {...transactionForm, account_number: viewedAccount?.account_number || "",});
-      
-      updateCategoryBreakdown(viewedAccount.id, transactionForm.category, transactionForm.type, transactionForm.amount, transactionForm.date);
-      changeAccountBalance(transactionForm.type, transactionForm.amount, viewedAccount.id, transactionDocRef.id);
+  
+      // Add transaction to Firestore
+      const transactionDocRef = await addDoc(transactionsRef, {
+        ...transactionForm,
+        amount: parseFloat(transactionForm.amount), // Ensure amount is a number
+        account_number: viewedAccount?.account_number || "",
+        user_id: user.uid,
+      });
+  
+      // Update account balance and category breakdown
+      await Promise.all([
+        updateCategoryBreakdown(viewedAccount.id, category, amount, date),
+        changeAccountBalance(amount, viewedAccount.id, transactionDocRef.id),
+      ]);
+  
       resetTransactionForm();
       setAddTransaction(false);
       alert("Transaction added successfully!");
     } catch (error) {
-      console.error("Error adding transaction: ", error);
+      console.error("Error adding transaction:", error);
+      alert("An error occurred while adding the transaction.");
     }
-  };
+  }
 
   async function handleDeleteTransaction(id) {
-    // !Deleting transaction DOES affect main balance
-    
-    const confirmDelete = true;
-
-    if (confirmDelete) {
+    const confirmDelete = window.confirm("Are you sure you want to delete this transaction?");
+  
+    if (!confirmDelete) return;
+  
+    try {
       const transactionDocRef = doc(db, "transactions", id);
       const transactionSnapshot = await getDoc(transactionDocRef);
+  
+      if (!transactionSnapshot.exists()) {
+        alert("Transaction does not exist.");
+        return;
+      }
+  
       const transactionData = transactionSnapshot.data();
-
-      deleteDoc(transactionDocRef)
-        .then(() => {
-          updateCategoryBreakdown(viewedAccount.id, transactionData.category, transactionData.type, (transactionData.amount*-1), transactionData.date);
-          changeAccountBalance(transactionData.type, (transactionData.amount*-1), viewedAccount.id);
-          alert("Transaction deleted successfully!");
-        })
-        .catch((error) => {
-          console.error("Error deleting transaction: ", error);
-        });
+  
+      // Delete the transaction and update account balance and category breakdown
+      await Promise.all([
+        deleteDoc(transactionDocRef),
+        updateCategoryBreakdown(viewedAccount.id, transactionData.category, -transactionData.amount, transactionData.date), // Reverse the amount
+        changeAccountBalance(-transactionData.amount, viewedAccount.id), // Reverse the amount
+      ]);
+  
+      alert("Transaction deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting transaction:", error);
+      alert("An error occurred while deleting the transaction.");
     }
   }
 
@@ -367,7 +515,7 @@ const TransactionsPage = () => {
 
   // Stats and Advanced Account Updates
 
-  async function updateCategoryBreakdown(accountId, category, type, amount, date) {
+  async function updateCategoryBreakdown(accountId, category, amount, date) {
     const accountDocRef = doc(db, "accounts", accountId);
   
     // Extract year and month from the date
@@ -391,13 +539,9 @@ const TransactionsPage = () => {
       categoryBreakdown[year][month][category] = 0;
     }
   
-    // Update category
-    if (type === "Money Out") {
-      categoryBreakdown[year][month][category] -= parseFloat(amount);
-    } else if (type === "Money In") {
-      categoryBreakdown[year][month][category] += parseFloat(amount);
-    } else return;
-
+    // Update category based on the sign of the amount
+    categoryBreakdown[year][month][category] += parseFloat(amount);
+  
     await updateDoc(accountDocRef, { categoryBreakdown });
   }
 
@@ -477,17 +621,17 @@ const TransactionsPage = () => {
 
           <div className='flex flex-row'>
             {addTransaction && (
-                <div className="bg-gray-700 p-5 w-100 h-90 rounded-xl mr-4">
+                <div className="bg-gray-700 p-5 w-100 h-100 rounded-xl mr-4">
                   <h3 className="text-2xl mb-3">Add New Transaction</h3>
-                  <select
+                  {/* <select
                     className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
                     name="type"
                     value={transactionForm.type}
                     onChange={handleTransactionForm}
                   >
-                    <option value="Money In">Money In</option>
-                    <option value="Money Out">Money Out</option>
-                  </select>
+                    <option value="Deposit">Deposit</option>
+                    <option value="Withdrawl">Withdrawl</option>
+                  </select> */}
                   <input
                     className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
                     type="text"
@@ -559,6 +703,11 @@ const TransactionsPage = () => {
                     placeholder="Amount"
                     onChange={handleTransactionForm}
                   />
+                  
+                  <p className="text-lg">
+                    {transactionForm.type}
+                  </p>
+
                   <button
                     className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 mr-3"
                     onClick={handleAddTransaction}
@@ -592,16 +741,17 @@ const TransactionsPage = () => {
                     </option>
                   ))}
                 </select>
-                <select
+                {/* <select
                   className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
                   name="type"
                   value={transferForm.type}
                   onChange={handleTransferForm}
                 >
-                  <option value="Money In">Money In</option>
-                  <option value="Money Out">Money Out</option>
-                </select>
-                <div className='w-full text-md text-center my-1 font-bold'>{transferForm.type == "Money In" ? <p>From</p> : <p>To</p>}</div>
+                  <option value="Deposit">Deposit</option>
+                  <option value="Withdrawl">Withdrawl</option>
+                </select> */}
+                <div>{transferForm.type}</div>
+                <div className='w-full text-md text-center my-1 font-bold'>{transferForm.type == "Deposit" ? <p>To</p> : <p>From</p>}</div>
                 <select
                   className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
                   name="destinationAccount"

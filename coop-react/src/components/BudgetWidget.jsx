@@ -25,15 +25,15 @@ const BudgetWidget = ({
             <div className='flex bg-gray-700 w-full h-full rounded-3xl p-5'>
                 <div className='flex flex-row justify-left items-center'>
                     <div className='w-60'>
-                        <div className='text-xl'>{name}</div>
+                        <div className='text-2xl'>{name}</div>
                         <div className='text-lg'>{category}</div>
                     </div>
                     <div className='flex flex-col justify-center items-center w-40'>
                         <div className='text-lg'>{monthYear}</div>
                         {/* <div className='text-lg'>{gains}</div> */}
                     </div>
-                    <div className='flex w-20 justify-center text-lg'>{progress}%</div>
-                    <div className='flex w-30 justify-center text-2xl'>${spentAmount}/{budgetedAmount}</div>
+                    <div className='flex w-20 justify-center text-xl'>{progress}%</div>
+                    <div className='flex w-37 justify-center text-xl'>${spentAmount}/{budgetedAmount}</div>
                 </div>
             </div>
         </div>

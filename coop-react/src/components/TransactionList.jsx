@@ -14,7 +14,7 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
                 value={filterTransactions.filter}
                 onChange={handleFilterTransaction}
               >
-                <option>Name and Category</option>
+                <option>None</option>
                 <option selected>Date</option>
                 <option selected>Date Range</option>
                 <option selected>Amount Range</option>
@@ -24,11 +24,11 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
                 name="type"
                 onChange={handleFilterTransaction}
               >
-                <option>Money In</option>
-                <option selected>Money Out</option>
+                <option>Deposit</option>
+                <option selected>Withdrawl</option>
             </select>
 
-            {filterTransactions.filter == 'Name and Category' && (
+            {true && (
               <div className='flex flex-row'>
                 <input
                   className="border-2 border-gray-500 rounded-xl m-1 p-1 w-70"
@@ -100,7 +100,7 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
                 /> 
               </>
             )}   
-            {filterTransactions.filter != 'Name and Category' && filterTransactions.filter != 'Date' && (
+            {filterTransactions.filter != 'None' && filterTransactions.filter != 'Date' && (
               <select
               className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-20"
               name="filterOrder"
@@ -131,7 +131,7 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
                     <div className="w-100">{transaction.name}</div>
                     <div className="w-40">{transaction.date}</div>
                     <div className="w-60">{transaction.category}</div>
-                    <div className='w-10'>${transaction.amount}</div>
+                    <div className='w-15'>${transaction.amount}</div>
 
                     <button onClick={() => handleDeleteTransaction(transaction.id)} className="bg-red-600 rounded-4xl px-2 ml-2">
                       <FaTrash />

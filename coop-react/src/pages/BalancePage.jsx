@@ -127,18 +127,15 @@ const BalancePage = () => {
               Unlink Account
             </button>
           </>
-        ) : (
+        ) : <div className="text-xl">Please select an account to view details.</div> }
           <>
-            <div className="text-xl">Please select an account to view details.</div>
             <button
-              className="w-fit min-h-8 h-8 bg-green-600 rounded-4xl px-2 my-5 mr-3"
+              className="w-fit min-h-8 h-8 bg-green-600 rounded-4xl px-2 mr-3"
               onClick={() => setNewAccount(!newAccount)}
             >+ New Account
             </button>
           </>
           
-          
-        )}
         
         {newAccount && (
           <div className="bg-gray-700 w-100 p-5 rounded-xl">
