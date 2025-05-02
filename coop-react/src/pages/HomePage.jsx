@@ -16,10 +16,18 @@ const HomePage = () => {
   const { user } = useContext(UserContext);
   const {viewedAccount} = useContext(UserContext);
   const {updateViewedAccount} = useContext(UserContext);
+  const {fetchAccounts} = useContext(UserContext);
   const [aiInsight, setAiInsight] = useState(null);
 
   const api = import.meta.env.VITE_API_GOOGLE_GENAI
   const ai = new GoogleGenAI({ apiKey: api });
+
+
+  useEffect(() => {
+    if (viewedAccount) {
+      fetchAccounts();
+    }
+  },[viewedAccount]);
 
   // Monthly balance
   function getMonthlyBalanceChange(accountData) {
@@ -275,11 +283,15 @@ const HomePage = () => {
     }
   }, [viewedAccount]);
 
+  
+
   return (
     <div className='flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white'>
       <div className="flex flex-col w-full h-400 p-10">
-        <div className='text-3xl my-3'>Welcome {user.displayName}</div>
         <AccountViewer />
+        
+        <div className='text-3xl my-3'>Welcome {user.displayName}</div>
+        
 
         {viewedAccount && (
           <>

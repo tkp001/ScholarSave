@@ -34,6 +34,7 @@ const BalancePage = () => {
   }
 
   useEffect(() => {
+    fetchAccounts();
     if (viewedAccount) {
       fetchLastTransaction(viewedAccount.last_transaction);
     }

@@ -5,6 +5,7 @@ import UserContext from '../UserContext';
 import { useContext } from 'react';
 import TransactionList from '../components/TransactionList';
 import AccountViewer from '../components/AccountViewer';
+import ImportTransactions from '../components/ImportTransactions';
 
 
 const TransactionsPage = () => {
@@ -115,7 +116,7 @@ const TransactionsPage = () => {
       }
       if (filterTransactions.filter == "Amount Range" && (filterTransactions.amountMin || filterTransactions.amountMax)) {
         const amountMin = parseFloat(filterTransactions.amountMin) || 0;
-        const amountMax = parseFloat(filterTransactions.amountMax) || Infinity;
+        const amountMax = parseFloat(filterTransactions.amountMax) || 1000000000;
         q = query(q, where("amount", ">=", amountMin));
         q = query(q, where("amount", "<=", amountMax));
         q = query(q, orderBy("amount", filterTransactions.filterOrder));
@@ -367,6 +368,10 @@ const TransactionsPage = () => {
       alert("Source and destination accounts cannot be the same.");
       return;
     }
+    if (isNaN(amount) || parseFloat(amount) <= 0) {
+      alert("Please enter a valid amount greater than zero.");
+      return;
+    }
   
     try {
       // Fetch source and destination account documents
@@ -392,20 +397,20 @@ const TransactionsPage = () => {
       let type1;
       let type2;
 
-      if (parseFloat(amount) < 0) {
-        type1 = "Withdrawl";
-        type2 = "Deposit";
-      } else {
-        type1 = "Deposit";
-        type2 = "Withdrawl";
-      }
+      // if (parseFloat(amount) > 0) {
+      //   type1 = "Withdrawl";
+      //   type2 = "Deposit";
+      // } else {
+      //   type1 = "Deposit";
+      //   type2 = "Withdrawl";
+      // }
 
       const transactionData = [
         {
           name: `Transfer to ${destinationData.account_number}`,
           category: "Transfer",
           amount: -Math.abs(parseFloat(amount)), // Negative for source
-          type: type1,
+          type: "Withdrawl",
           account_number: sourceData.account_number,
           user_id: user.uid,
           date: new Date(date).toLocaleDateString(),
@@ -414,7 +419,7 @@ const TransactionsPage = () => {
           name: `Transfer from ${sourceData.account_number}`,
           category: "Transfer",
           amount: Math.abs(parseFloat(amount)), // Positive for destination
-          type: type2,
+          type: "Deposit",
           account_number: destinationData.account_number,
           user_id: user.uid,
           date: new Date(date).toLocaleDateString(),
@@ -589,6 +594,8 @@ const TransactionsPage = () => {
       <div className="flex flex-col w-full p-10 max-w-250">
         <AccountViewer />
         
+        <ImportTransactions />
+
         {viewedAccount && ( 
         <>
           <div className="text-2xl mb-1">View</div>   
@@ -621,7 +628,7 @@ const TransactionsPage = () => {
 
           <div className='flex flex-row'>
             {addTransaction && (
-                <div className="bg-gray-700 p-5 w-100 h-100 rounded-xl mr-4">
+                <div className="bg-gray-700 p-5 w-100 h-115 rounded-xl mr-4">
                   <h3 className="text-2xl mb-3">Add New Transaction</h3>
                   {/* <select
                     className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
@@ -704,9 +711,9 @@ const TransactionsPage = () => {
                     onChange={handleTransactionForm}
                   />
                   
-                  <p className="text-lg">
-                    {transactionForm.type}
-                  </p>
+                  <p className="text-md my-2">+ for Deposit</p>
+                  <p className="text-md my-2">- for Withdrawl</p>
+                  <p className="text-md my-2">You are performing "{transactionForm.type}"</p>
 
                   <button
                     className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 mr-3"
@@ -726,6 +733,7 @@ const TransactionsPage = () => {
             {transferMoney && (
               <div className="bg-gray-700 p-5 w-100 h-100 rounded-xl">
                 <h3 className="text-2xl mb-3">Transfer Money</h3>
+                <div className='w-full text-md text-center my-1 font-bold'>From</div>
                 <select
                   className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
                   name="sourceAccount"
@@ -750,8 +758,8 @@ const TransactionsPage = () => {
                   <option value="Deposit">Deposit</option>
                   <option value="Withdrawl">Withdrawl</option>
                 </select> */}
-                <div>{transferForm.type}</div>
-                <div className='w-full text-md text-center my-1 font-bold'>{transferForm.type == "Deposit" ? <p>To</p> : <p>From</p>}</div>
+                {/* <div>{transferForm.type}</div> */}
+                <div className='w-full text-md text-center my-1 font-bold'>Deposit To</div>
                 <select
                   className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
                   name="destinationAccount"
