@@ -99,14 +99,17 @@ async function fetchSuggestedTopics(topics) {
     console.log("Parsed Topics:", cleanedResponse);
     const topics = JSON.parse(cleanedResponse);
 
-    // Ensure topics is an array
-    if (Array.isArray(topics)) {
-      setTopicsLoading(false);
-    } else if (topics.finance_topics && Array.isArray(topics.finance_topics)) {
-      setSuggestedTopics(topics.finance_topics); 
-    } else {  
-      throw new Error("Invalid JSON structure: Expected an array.");
-    }
+
+    setSuggestedTopics(topics.finance_topics); 
+
+    // // Ensure topics is an array
+    // if (Array.isArray(topics)) {
+    //   setTopicsLoading(false);
+    // } else if (topics.finance_topics && Array.isArray(topics.finance_topics)) {
+      
+    // } else {  
+    //   throw new Error("Invalid JSON structure: Expected an array.");
+    // }
     setTopicsLoading(false);
     
   } catch (error) {

@@ -25,6 +25,7 @@ const AccountViewer = () => {
       const selectedAccount = accounts.find((account) => account.id === selectedAccountId);
       // setViewedAccount(selectedAccount);
       updateViewedAccount(selectedAccount);
+      fetchAccounts();
     }
 
   return (
@@ -41,7 +42,7 @@ const AccountViewer = () => {
             </option>
             {accounts.map((account) => (
               <option key={account.id} value={account.id}>
-                {account.nickname} - {account.account_number} - ${account.balance}
+                {account.nickname} - {account.account_number} - ${parseFloat(account.balance).toFixed(2)}
               </option>
             ))}
         </select>

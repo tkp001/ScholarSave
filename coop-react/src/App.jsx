@@ -27,20 +27,63 @@ function App() {
   const [viewedAccount, setViewedAccount] = useState(null);
   const [accounts, setAccounts] = useState([]);
 
+  // function fetchAccounts() {
+  //   const accountsRef = collection(db, 'accounts');
+  //   const q = query(accountsRef, where('user_id', '==', user.uid));
+  //   getDocs(q)
+  //     .then((querySnapshot) => {
+  //       const accounts = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  //       updateAccounts(accounts);
+
+  //       // // Update viewedAccount with the latest data
+  //       // if (viewedAccount) {
+  //       //   const updatedAccount = accounts.find(
+  //       //     (account) => account.id === viewedAccount.id
+  //       //   );
+  //       //   if (updatedAccount) {
+  //       //     updateViewedAccount(updatedAccount);
+  //       //   }
+  //       // }
+
+  //       console.log(accounts);
+  //   })
+  //     .catch((error) => {
+  //       console.error('Error fetching accounts: ', error);
+  //     });
+  // }
+
   function fetchAccounts() {
-    const accountsRef = collection(db, 'accounts');
-    const q = query(accountsRef, where('user_id', '==', user.uid));
+    const accountsRef = collection(db, "accounts");
+    const q = query(accountsRef, where("user_id", "==", user.uid));
     getDocs(q)
       .then((querySnapshot) => {
-        const accounts = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        const accounts = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
         updateAccounts(accounts);
+  
+        // Update viewedAccount only if it is invalid or stale
+        if (viewedAccount) {
+          const updatedAccount = accounts.find(
+            (account) => account.id === viewedAccount.id
+          );
+          if (!updatedAccount) {
+            // If the currently viewed account no longer exists, reset it
+            updateViewedAccount(null);
+          } else if (JSON.stringify(updatedAccount) !== JSON.stringify(viewedAccount)) {
+            // If the viewedAccount data is stale, update it
+            updateViewedAccount(updatedAccount);
+          }
+        }
+  
         console.log(accounts);
-    })
+      })
       .catch((error) => {
-        console.error('Error fetching accounts: ', error);
+        console.error("Error fetching accounts: ", error);
       });
   }
-
+  
   function updateUser(newUser) {
     setUser(newUser)
   }

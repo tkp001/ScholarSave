@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../firebaseConfig';
-import { collection, getDocs, addDoc, deleteDoc, updateDoc, doc, query, where } from 'firebase/firestore';
+import { collection, getDocs, getDoc, addDoc, deleteDoc, updateDoc, doc, query, where } from 'firebase/firestore';
 import UserContext from '../UserContext';
 import { useContext } from 'react';
 
@@ -21,19 +21,51 @@ const AllowancePage = () => {
     category: "",
     type: "Budget",
     amount: "",
-    year: "",
-    month: "",
+    startDate: "",
+    endDate: "",
     user_id: user.uid,
   });
+
+  const [availableCategories, setAvailableCategories] = useState([]);
 
   const handleBudgetForm = (e) => {
     const { name, value } = e.target;
     setBudgetForm((prevFormData) => ({
       ...prevFormData,
       [name]: value,
-      }));
-      console.log(budgetForm);
-    };
+    }));
+    console.log(budgetForm);
+    
+    const startDate = new Date(budgetForm.startDate);
+    const endDate = new Date(budgetForm.endDate);
+
+    if (startDate && endDate && startDate <= endDate) {
+      const filteredCategories = getCategoriesWithinDateRange(startDate, endDate);
+      setAvailableCategories(filteredCategories);
+    }
+  };
+
+  function getCategoriesWithinDateRange(startDate, endDate) {
+    if (!viewedAccount?.categoryBreakdown) return [];
+  
+    const categories = [];
+    const breakdown = viewedAccount.categoryBreakdown;
+  
+    Object.keys(breakdown).forEach((year) => {
+      Object.keys(breakdown[year]).forEach((month) => {
+        const date = new Date(`${year}-${month}-01`); // Create a date from year and month
+        if (date >= startDate && date <= endDate) {
+          Object.keys(breakdown[year][month]).forEach((category) => {
+            if (!categories.includes(category)) {
+              categories.push(category);
+            }
+          });
+        }
+      });
+    });
+  
+    return categories;
+  }
 
   // Extra function
   function getAvailableYearsAndMonths(categoryBreakdown) {
@@ -49,52 +81,47 @@ const AllowancePage = () => {
   }
 
   async function handleAddBudget() {
-    if (
-      !budgetForm.name ||
-      !budgetForm.category ||
-      !budgetForm.amount ||
-      !budgetForm.year ||
-      !budgetForm.month
-    ) {
-      alert("Please fill out all fields.");
-      return;
-    }
-  
-    try {
-      const budgetsRef = collection(db, "allowances");
-      await addDoc(budgetsRef, {
-        ...budgetForm,   
-        account_number: viewedAccount.account_number,
-      });
-  
-      alert("Budget added successfully!");
-      setAddBudget(false);
-      // Reset budget form
-      fetchBudgets();
-    } catch (error) {
-      console.error("Error adding budget:", error);
-      alert("An error occurred while adding the budget.");
-    }
+  if (!budgetForm.name || !budgetForm.category || !budgetForm.amount || !budgetForm.startDate || !budgetForm.endDate) {
+    alert("Please fill out all fields.");
+    return;
   }
+
+  try {
+    const budgetsRef = collection(db, "allowances");
+    await addDoc(budgetsRef, {
+      ...budgetForm,
+      startDate: new Date(budgetForm.startDate).toLocaleDateString(), // Convert to local date format
+      endDate: new Date(budgetForm.endDate).toLocaleDateString(), // Convert to local date format
+      account_number: viewedAccount.account_number,
+    });
+
+    alert("Budget added successfully!");
+    setAddBudget(false);
+    fetchBudgets();
+  } catch (error) {
+    console.error("Error adding budget:", error);
+    alert("An error occurred while adding the budget.");
+  }
+}
 
   async function fetchBudgets() {
     try {
       const budgetsRef = collection(db, "allowances");
-  
+
       const q = query(
         budgetsRef,
         where("user_id", "==", user.uid),
         where("account_number", "==", viewedAccount.account_number),
         where("type", "==", "Budget")
       );
-  
+
       const querySnapshot = await getDocs(q);
-  
+
       const budgets = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-  
+
       setBudgets(budgets);
       console.log("Fetched budgets:", budgets);
     } catch (error) {
@@ -103,19 +130,34 @@ const AllowancePage = () => {
   }
 
   function getSpentAmount(budget) {
-    const { year, month, category } = budget;
+    const { category, startDate, endDate } = budget;
   
-    // Access catergory
-    const breakdown = viewedAccount?.categoryBreakdown?.[year]?.[month] || {};
+    if (!viewedAccount?.categoryBreakdown) return { spent: 0, gains: 0 };
   
-    // Calculate spent amount
-    const spentAmount = breakdown[category]*-1 || 0;
-
+    const breakdown = viewedAccount.categoryBreakdown;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+  
+    let totalSpent = 0;
+  
+    // Iterate over the categoryBreakdown
+    Object.keys(breakdown).forEach((year) => {
+      Object.keys(breakdown[year]).forEach((month) => {
+        const date = new Date(`${year}-${month}-01`); // Create a date from year and month
+        if (date >= start && date <= end) {
+          const monthlyBreakdown = breakdown[year][month];
+          if (monthlyBreakdown[category]) {
+            totalSpent += monthlyBreakdown[category];
+          }
+        }
+      });
+    });
+  
     // Separate gains and spending
     return {
-      spent: spentAmount > 0 ? spentAmount : 0,
-      gains: spentAmount < 0 ? Math.abs(spentAmount) : 0,
-    }
+      spent: totalSpent < 0 ? Math.abs(totalSpent) : 0, // Spending is negative
+      gains: totalSpent > 0 ? totalSpent : 0, // Gains are positive
+    };
   }
 
   useEffect(() => {
@@ -175,9 +217,9 @@ const AllowancePage = () => {
     name: "",
     category: "",
     type: "Saving",
-    amount: "", 
-    year: "",
-    month: "",
+    amount: "",
+    startDate: "",
+    endDate: "",
     user_id: user.uid,
     account_number: viewedAccount?.account_number,
   });
@@ -190,19 +232,111 @@ const AllowancePage = () => {
     }));
   };
 
+
+  // async function handleAddSaving() {
+  //   if (!savingForm.name || !savingForm.amount) {
+  //     alert("Please fill out all fields.");
+  //     return;
+  //   }
+  
+  //   try {
+  //     const savingsRef = collection(db, "allowances");
+  
+  //     // Add the saving to Firestore
+  //     await addDoc(savingsRef, {
+  //       ...savingForm,
+  //       account_number: viewedAccount.account_number,
+  //       category: savingForm.name,
+  //     });
+  
+  //     // Update the categoryBreakdown in the account document
+  //     const accountDocRef = doc(db, "accounts", viewedAccount.id);
+  //     const accountSnapshot = await getDoc(accountDocRef);
+  
+  //     if (accountSnapshot.exists()) {
+  //       const accountData = accountSnapshot.data();
+  //       const { year, month, name } = savingForm;
+  
+  //       // Initialize or update the categoryBreakdown
+  //       const categoryBreakdown = accountData.categoryBreakdown || {};
+  //       if (!categoryBreakdown[year]) {
+  //         categoryBreakdown[year] = {};
+  //       }
+  //       if (!categoryBreakdown[year][month]) {
+  //         categoryBreakdown[year][month] = {};
+  //       }
+  //       if (!categoryBreakdown[year][month][name]) {
+  //         categoryBreakdown[year][month][name] = 0; // Add 0 to the category
+  //       }
+  
+  //       // Update the account document in Firestore
+  //       await updateDoc(accountDocRef, { categoryBreakdown });
+  //     }
+  
+  //     alert("Saving added successfully!");
+  //     setAddSaving(false);
+  //     fetchSavings();
+  //   } catch (error) {
+  //     console.error("Error adding saving:", error);
+  //     alert("An error occurred while adding the saving.");
+  //   }
+  // }
+
   async function handleAddSaving() {
-    if (!savingForm.name || !savingForm.amount) {
+    if (!savingForm.name || !savingForm.amount || !savingForm.startDate || !savingForm.endDate) {
       alert("Please fill out all fields.");
       return;
     }
-
+  
     try {
       const savingsRef = collection(db, "allowances");
+  
+      // Add the saving to Firestore
       await addDoc(savingsRef, {
-        ...savingForm,   
+        ...savingForm,
+        startDate: new Date(savingForm.startDate).toLocaleDateString(), // Convert to local date format
+        endDate: new Date(savingForm.endDate).toLocaleDateString(), // Convert to local date format
         account_number: viewedAccount.account_number,
         category: savingForm.name,
       });
+  
+      // Update the categoryBreakdown in the account document
+      const accountDocRef = doc(db, "accounts", viewedAccount.id);
+      const accountSnapshot = await getDoc(accountDocRef);
+  
+      if (accountSnapshot.exists()) {
+        const accountData = accountSnapshot.data();
+        const { startDate, endDate, name } = savingForm;
+  
+        // Initialize or update the categoryBreakdown
+        const categoryBreakdown = accountData.categoryBreakdown || {};
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+  
+        // Iterate through all months in the date range
+        let current = new Date(start);
+        while (current <= end) {
+          const year = current.getFullYear().toString();
+          const month = (current.getMonth() + 1).toString().padStart(2, "0"); // Ensure month is 2 digits
+  
+          if (!categoryBreakdown[year]) {
+            categoryBreakdown[year] = {};
+          }
+          if (!categoryBreakdown[year][month]) {
+            categoryBreakdown[year][month] = {};
+          }
+          if (!categoryBreakdown[year][month][name]) {
+            categoryBreakdown[year][month][name] = 0; // Initialize the category with 0
+          }
+  
+          // Move to the next month
+          current.setMonth(current.getMonth() + 1);
+        }
+  
+        // Update the account document in Firestore
+        await updateDoc(accountDocRef, { categoryBreakdown });
+      }
+  
       alert("Saving added successfully!");
       setAddSaving(false);
       fetchSavings();
@@ -213,13 +347,44 @@ const AllowancePage = () => {
   }
 
   function getSavedAmount(saving) {
-    const { year, month, name } = saving;
+    const { name: category, startDate, endDate } = saving;
   
-    const breakdown = viewedAccount?.categoryBreakdown?.[year]?.[month] || {};
+    if (!viewedAccount?.categoryBreakdown) return 0;
   
-    const savedAmount = breakdown[name] || 0;
+    const breakdown = viewedAccount.categoryBreakdown;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
   
-    return savedAmount;
+    let totalSaved = 0;
+  
+    console.log("Category Breakdown:", breakdown);
+    console.log("Category:", category);
+    console.log("Start Date:", start);
+    console.log("End Date:", end);
+  
+    // Iterate over the categoryBreakdown
+    Object.keys(breakdown).forEach((year) => {
+      if (year >= start.getFullYear() && year <= end.getFullYear()) {
+        Object.keys(breakdown[year]).forEach((month) => {
+          const monthStart = new Date(`${year}-${month.padStart(2, "0")}-01`); // Start of the month
+          const monthEnd = new Date(monthStart); // End of the month
+          monthEnd.setMonth(monthEnd.getMonth() + 1);
+          monthEnd.setDate(0); // Last day of the month
+  
+          console.log(`Checking month: ${monthStart} to ${monthEnd}`);
+          if (monthStart <= end && monthEnd >= start) {
+            const monthlyBreakdown = breakdown[year][month];
+            if (monthlyBreakdown[category]) {
+              console.log(`Adding ${monthlyBreakdown[category]} for ${year}-${month}`);
+              totalSaved += monthlyBreakdown[category];
+            }
+          }
+        });
+      }
+    });
+  
+    console.log("Total Saved:", totalSaved);
+    return totalSaved;
   }
 
   async function handleDeleteSaving(savingId) {
@@ -260,10 +425,10 @@ const AllowancePage = () => {
                       budgetedAmount={budget.amount}
                       spentAmount={currentAmount.spent}
                       gains={currentAmount.gains}
-                      monthYear={`${new Date(0, parseInt(budget.month) - 1).toLocaleString(
-                        "default",
-                        { month: "long" }
-                      )} ${budget.year}`}
+                      startDate={budget.startDate}
+                      endDate={budget.endDate}
+                      // startDate={new Date(budget.startDate).toLocaleDateString()}
+                      // endDate={new Date(budget.endDate).toLocaleDateString()}
                       progress={progress}
                     />
                   </li>
@@ -292,12 +457,10 @@ const AllowancePage = () => {
                       saving={saving}
                       name={saving.name}
                       goalAmount={saving.amount}
+                      startDate={new Date(saving.startDate).toLocaleDateString()}
+                      endDate={new Date(saving.endDate).toLocaleDateString()}
                       savedAmount={savedAmount}
                       progress={progress}
-                      monthYear={`${new Date(0, parseInt(saving.month) - 1).toLocaleString(
-                        "default",
-                        { month: "long" }
-                      )} ${saving.year}`}
                       handleDeleteSaving={() => handleDeleteSaving(saving.id)}
                     />
                   </li>
@@ -349,40 +512,22 @@ const AllowancePage = () => {
                 placeholder="Budget Amount"
                 onChange={handleBudgetForm}
               />
-              <select
-                className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
-                name="year"
-                value={budgetForm.year}
+              <input
+                className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
+                type="date"
+                name="startDate"
+                value={budgetForm.startDate}
+                placeholder="Start Date"
                 onChange={handleBudgetForm}
-              >
-                <option value="" disabled>
-                  Select Year
-                </option>
-                {Object.keys(viewedAccount?.categoryBreakdown || {}).map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
-                name="month"
-                value={budgetForm.month}
+              />
+              <input
+                className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
+                type="date"
+                name="endDate"
+                value={budgetForm.endDate}
+                placeholder="End Date"
                 onChange={handleBudgetForm}
-              >
-                <option value="" disabled>
-                  Select Month
-                </option>
-                {Object.keys(viewedAccount?.categoryBreakdown?.[budgetForm.year] || {}).map(
-                  (month) => (
-                    <option key={month} value={month}>
-                      {new Date(0, parseInt(month) - 1).toLocaleString("default", {
-                        month: "long",
-                      })}
-                    </option>
-                  )
-                )}
-              </select>
+              />
               
               <select
                 className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
@@ -393,9 +538,7 @@ const AllowancePage = () => {
                 <option value="" disabled>
                   Select Category
                 </option>
-                {Object.keys(
-                  viewedAccount?.categoryBreakdown?.[budgetForm.year]?.[budgetForm.month] || {}
-                ).map((category) => (
+                {availableCategories.map((category) => (
                   <option key={category} value={category}>
                     {category}
                   </option>
@@ -438,17 +581,18 @@ const AllowancePage = () => {
               <input
                 className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
                 type="date"
-                name="date"
-                onChange={(e) => {
-                  const selectedDate = new Date(e.target.value);
-                  const year = selectedDate.getFullYear();
-                  const month = (selectedDate.getMonth() + 1).toString().padStart(2, "0"); // Ensure month is 2 digits
-                  setSavingForm((prevFormData) => ({
-                    ...prevFormData,
-                    year,
-                    month,
-                  }));
-                }}
+                name="startDate"  
+                value={savingForm.startDate}
+                placeholder="Start Date"
+                onChange={handleSavingForm}
+              />
+              <input
+                className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
+                type="date"
+                name="endDate"
+                value={savingForm.endDate}
+                placeholder="End Date"
+                onChange={handleSavingForm}
               />
               <button
                 className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 mr-3"

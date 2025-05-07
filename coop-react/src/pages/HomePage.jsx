@@ -17,17 +17,11 @@ const HomePage = () => {
   const {viewedAccount} = useContext(UserContext);
   const {updateViewedAccount} = useContext(UserContext);
   const {fetchAccounts} = useContext(UserContext);
+  const {accounts} = useContext(UserContext);
   const [aiInsight, setAiInsight] = useState(null);
 
   const api = import.meta.env.VITE_API_GOOGLE_GENAI
   const ai = new GoogleGenAI({ apiKey: api });
-
-
-  useEffect(() => {
-    if (viewedAccount) {
-      fetchAccounts();
-    }
-  },[viewedAccount]);
 
   // Monthly balance
   function getMonthlyBalanceChange(accountData) {
@@ -263,7 +257,6 @@ const HomePage = () => {
   useEffect(() => {
     // Check if all required data is available
     setAiInsight(null); // Reset when account changes
-    
     if (
       viewedAccount &&
       monthlyBalance.length > 0 &&

@@ -34,7 +34,6 @@ const BalancePage = () => {
   }
 
   useEffect(() => {
-    fetchAccounts();
     if (viewedAccount) {
       fetchLastTransaction(viewedAccount.last_transaction);
     }
@@ -43,7 +42,7 @@ const BalancePage = () => {
   const [newAccount, setNewAccount] = useState();
   const [accountForm, setAccountForm] = useState({
     account_number: "",
-    balance: "",
+    balance: 0,
     nickname: "",
     status: "active",
     user_id: user.uid,
@@ -103,7 +102,7 @@ const BalancePage = () => {
         {viewedAccount ? (
           <>
             <div className="text-3xl">Total Balance</div>
-            <div className="text-5xl mb-10">${viewedAccount.balance}</div>
+            <div className="text-5xl mb-10">${parseFloat(viewedAccount.balance).toFixed(2)}</div>
 
             <div className="text-3xl">Last Modified</div>
             <div className="text-2xl mb-10">{viewedAccount.last_modified}</div>
@@ -139,7 +138,7 @@ const BalancePage = () => {
           
         
         {newAccount && (
-          <div className="bg-gray-700 w-100 p-5 rounded-xl">
+          <div className="bg-gray-700 w-100 p-5 my-5 rounded-xl">
             <h3 className="text-2xl mb-3">Add New Account</h3>
             <input
               className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
