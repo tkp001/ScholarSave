@@ -3,6 +3,47 @@ import { FaTrash } from "react-icons/fa";
 
 
 const TransactionList = ({ transactions, filterTransactions, handleFilterTransaction, handleDeleteTransaction}) => {
+  function formatTimestampToUTC4(timestamp) {
+    if (timestamp?.toDate) {
+      // Convert Firestore Timestamp to JavaScript Date
+      const utcDate = timestamp.toDate();
+
+      // Adjust to UTC-4
+      const utc4Offset = -4 * 60; // UTC-4 in minutes
+      const utc4Date = new Date(utcDate.getTime() + utc4Offset * 60 * 1000);
+
+      return utc4Date.toLocaleDateString(); // Format as MM/DD/YYYY or based on locale
+    } else {
+      return "Invalid Date"; // Handle invalid cases
+    }
+  }
+
+  function getTimeZoneFromTimestamp(timestamp) {
+    if (timestamp?.toDate) {
+      // Convert Firestore Timestamp to JavaScript Date
+      const date = timestamp.toDate();
+  
+      // Get the time zone offset in minutes
+      const offsetInMinutes = date.getTimezoneOffset();
+  
+      // Convert the offset to hours (negative for UTC+ zones)
+      const offsetInHours = -offsetInMinutes / 60;
+  
+      // Format the time zone as UTC±HH:MM
+      const hours = Math.floor(offsetInHours);
+      const minutes = Math.abs(offsetInHours % 1) * 60;
+      const formattedOffset = `UTC${hours >= 0 ? "+" : ""}${hours}:${minutes.toString().padStart(2, "0")}`;
+  
+      return formattedOffset;
+    } else {
+      return "Invalid Timestamp";
+    }
+  }
+  
+  // // Example usage
+  // const timestamp = Timestamp.now(); // Firestore Timestamp
+  // console.log(getTimeZoneFromTimestamp(timestamp)); // Output: e.g., "UTC-04:00" (if in Eastern Daylight Time)
+  
   return (
     <div>
       <ul className="bg-gray-700 p-2 rounded-3xl min-w-100">
@@ -129,7 +170,7 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
                 <div className="flex flex-row justify-left w-full bg-gray-600 rounded-xl m-1 p-2">
                   <div className='flex w-full'>
                     <div className="w-100">{transaction.name}</div>
-                    <div className="w-40">{transaction.date}</div>
+                    <div className="w-40 text-sm">Local: {transaction.fullDate?.toDate().toISOString()}, Timestamp: {transaction.fullDate?.toDate().toLocaleString()}</div>
                     <div className="w-60">{transaction.category}</div>
                     <div className='w-15'>${transaction.amount}</div>
 

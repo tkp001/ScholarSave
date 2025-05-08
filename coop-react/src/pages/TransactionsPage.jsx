@@ -91,59 +91,51 @@ const TransactionsPage = () => {
         where("account_number", "==", viewedAccount.account_number),
         where("type", "==", filterTransactions.type)
       );
-      
+  
+      // Apply date filter
       if (filterTransactions.filter === "Date" && filterTransactions.date) {
-        const date = new Date(filterTransactions.date);
-        const startOfDay = Timestamp.fromDate(new Date(date.setHours(0, 0, 0, 0))); // Start of the day
-        const endOfDay = Timestamp.fromDate(new Date(date.setHours(23, 59, 59, 999))); // End of the day
-      
+        const localDate = new Date(filterTransactions.date);
+  
+        const startOfDay = Timestamp.fromDate(
+          new Date(localDate.getTime())
+        );
+        const endOfDay = Timestamp.fromDate(
+          new Date(localDate.getTime())
+        );
+  
         q = query(q, where("fullDate", ">=", startOfDay));
         q = query(q, where("fullDate", "<=", endOfDay));
       }
+  
+      // Apply date range filter
       if (filterTransactions.filter === "Date Range" && filterTransactions.startDate && filterTransactions.endDate) {
         const startDate = new Date(filterTransactions.startDate);
         const endDate = new Date(filterTransactions.endDate);
-      
-        const normalizedStartDate = Timestamp.fromDate(new Date(startDate.setHours(0, 0, 0, 0))); // Start of the day
-        const normalizedEndDate = Timestamp.fromDate(new Date(endDate.setHours(23, 59, 59, 999))); // End of the day
-      
-        q = query(q, where("fullDate", ">=", normalizedStartDate));
-        q = query(q, where("fullDate", "<=", normalizedEndDate));
+  
+        const startOfDay = Timestamp.fromDate(
+          new Date(startDate.getTime())
+        );
+        const endOfDay = Timestamp.fromDate(
+          new Date(endDate.getTime())
+        );
+  
+        q = query(q, where("fullDate", ">=", startOfDay));
+        q = query(q, where("fullDate", "<=", endOfDay));
         q = query(q, orderBy("fullDate", filterTransactions.filterOrder));
       }
-      if (filterTransactions.filter == "Amount Range" && (filterTransactions.amountMin || filterTransactions.amountMax)) {
-        const amountMin = parseFloat(filterTransactions.amountMin) || 0;
-        const amountMax = parseFloat(filterTransactions.amountMax) || 1000000000;
-        q = query(q, where("amount", ">=", amountMin));
-        q = query(q, where("amount", "<=", amountMax));
-        q = query(q, orderBy("amount", filterTransactions.filterOrder));
-      }
-
-      console.log(filterTransactions)
+  
       const querySnapshot = await getDocs(q);
-
+  
       const transactionsData = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-
-      // Perform local filtering for name and category
-      const filteredTransactions = transactionsData.filter((transaction) => {
-        const matchesName = filterTransactions.name
-          ? transaction.name.toLowerCase().includes(filterTransactions.name.toLowerCase())
-          : true;
-        const matchesCategory = filterTransactions.category
-          ? transaction.category.toLowerCase().includes(filterTransactions.category.toLowerCase())
-          : true;
-
-        return matchesName && matchesCategory;
-      });
-
-      setTransactions(filteredTransactions); // Local filtering
+  
+      setTransactions(transactionsData);
     } catch (error) {
       console.error("Error fetching transactions:", error);
     }
-  };
+  }
 
   const handleFilterTransaction = (e) => {
     const { name, value } = e.target;
@@ -155,56 +147,24 @@ const TransactionsPage = () => {
     console.log("filterTransactions", filterTransactions);
   };
 
-  const handleTransferForm = (e) => {
-    const { name, value } = e.target;
-    setTransferForm((prevFormData) => ({
-      ...prevFormData,
-      [name]: value,
-    }));
-
-    if (name === "amount") {
-      if (parseFloat(value) < 0) {
-        setTransferForm((prevFormData) => ({
-          ...prevFormData,
-          type: "Withdrawl",
-        }));
-      } else {
-        setTransferForm((prevFormData) => ({
-          ...prevFormData,
-          type: "Deposit",
-        }));
-      }
-    }
-
-    console.log("filterTransactions", filterTransactions);
-  };
-
   const handleTransactionForm = (e) => {
     const { name, value } = e.target;
   
-    // If the input is for the date, format it to only include the date
     if (name === "date") {
-      const date = new Date(value).toLocaleDateString();
-      const fullDate = Timestamp.fromDate(new Date(value)); // Convert to Firestore Timestamp
+      // Parse the input date as a local date
+      const localDate = new Date(value);
+  
+      // Normalize to midnight UTC
+      // const utcDate = new Date(localDate.getTime());
+  
+      const fullDate = Timestamp.fromDate(localDate); // Store as Firestore Timestamp
+      // console.log("fullDate", utcDate);
+
       setTransactionForm((prevFormData) => ({
         ...prevFormData,
-        date: date,
-        fullDate: fullDate,
-      }));     
-    } else if (name === "category") {
-      if (value === "Custom Category") {
-        setTransactionForm((prevFormData) => ({
-          ...prevFormData,
-          category: "",
-          customCategory: true,
-        }));
-      } else {
-        setTransactionForm((prevFormData) => ({
-          ...prevFormData,
-          category: value,
-          customCategory: false,
-        }));
-      }
+        date: value, // Keep the original date string (YYYY-MM-DD)
+        fullDate: fullDate, // Store the date
+      }));
     } else {
       setTransactionForm((prevFormData) => ({
         ...prevFormData,
@@ -213,21 +173,42 @@ const TransactionsPage = () => {
     }
 
     if (name === "amount") {
-      if (parseFloat(value) < 0) {
-        setTransactionForm((prevFormData) => ({
-          ...prevFormData,
-          type: "Withdrawl",
-        }));
-      } else {
-        setTransactionForm((prevFormData) => ({
-          ...prevFormData,
-          type: "Deposit",
-        }));
-      }
+      const amountValue = parseFloat(value);
+      const typeValue = amountValue < 0 ? "Withdrawl" : "Deposit";
+      setTransactionForm((prevFormData) => ({
+        ...prevFormData,
+        type: typeValue,
+      }));
     }
-    
-
+  
     console.log("transactionForm", transactionForm);
+  };
+  
+  const handleTransferForm = (e) => {
+    const { name, value } = e.target;
+  
+    if (name === "date") {
+      // Parse the input date as a local date
+      const localDate = new Date(value);
+  
+      // Normalize to midnight UTC
+      // const utcDate = new Date(Date.UTC(localDate.getFullYear(), localDate.getMonth(), localDate.getDate()));
+  
+      const fullDate = Timestamp.fromDate(localDate); // Store as Firestore Timestamp
+  
+      setTransferForm((prevFormData) => ({
+        ...prevFormData,
+        date: value, // Keep the original date string (YYYY-MM-DD)
+        fullDate: fullDate, // Store the date
+      }));
+    } else {
+      setTransferForm((prevFormData) => ({
+        ...prevFormData,
+        [name]: value,
+      }));
+    }
+  
+    console.log("transferForm", transferForm);
   };
 
   async function changeAccountBalance(amount, accountId, transactionDocRef = "N/A") {
@@ -321,8 +302,8 @@ const TransactionsPage = () => {
           type: "Withdrawl",
           account_number: sourceData.account_number,
           user_id: user.uid,
-          date: new Date(date).toLocaleDateString(),
-          fullDate: Timestamp.fromDate(new Date(date)), // Store as Firestore Timestamp
+          date: transferForm.date,
+          fullDate: transferForm.fullDate, // Store as Firestore Timestamp
         },
         {
           name: `Transfer from ${sourceData.account_number}`,
@@ -331,8 +312,8 @@ const TransactionsPage = () => {
           type: "Deposit",
           account_number: destinationData.account_number,
           user_id: user.uid,
-          date: new Date(date).toLocaleDateString(),
-          fullDate: Timestamp.fromDate(new Date(date)), // Store as Firestore Timestamp
+          date: transferForm,
+          fullDate: transferForm.fullDate, // Store as Firestore Timestamp
         },
       ];
   
@@ -375,7 +356,7 @@ const TransactionsPage = () => {
         amount: parseFloat(transactionForm.amount), // Ensure amount is a number
         account_number: viewedAccount?.account_number || "",
         user_id: user.uid,
-        fullDate: transactionForm.fullDate || Timestamp.fromDate(new Date(date)), // Ensure fullDate is a Timestamp
+        // fullDate: transactionForm.fullDate || Timestamp.fromDate(new Date(date)), // Ensure fullDate is a Timestamp
       });
   
       // Update account balance and category breakdown
@@ -649,7 +630,7 @@ const TransactionsPage = () => {
         <AccountViewer />
         
         {viewedAccount && ( 
-        <>
+        <>  
           <ImportTransactions importCorrectedTransactions={importCorrectedTransactions}/>
 
           <div className="text-2xl mb-1">View</div>   
