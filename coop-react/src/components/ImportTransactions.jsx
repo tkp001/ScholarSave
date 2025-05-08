@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useDropzone } from "react-dropzone";
 import csv from "csvtojson";
 import { GoogleGenAI } from "@google/genai";
+import { Timestamp } from "firebase/firestore"; // Import Timestamp from Firestore
 
 const ImportTransactions = ({importCorrectedTransactions}) => {
   const [parsedData, setParsedData] = useState([]); // State to store parsed CSV data
@@ -19,30 +20,55 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
     }
 
     async function AIEnhance(q) {
-        if (q) {
-            const response = await ai.models.generateContent({
-              model: "gemini-2.0-flash",
-              temperature: 0.2,
-              contents: "present the data: " + q + " in JSON format, include the headings (Name, Date, Category, Amount), all headings are lowercase. Do not include any additional text outside the JSON object. name of JSON is data"
-            });
-            // Manually clean and format the response
-            let cleanedResponse = response.text.trim(); // Remove leading/trailing whitespace
-
-            // Find the start and end of the JSON object
-            const jsonStartIndex = cleanedResponse.indexOf("{");
-            const jsonEndIndex = cleanedResponse.lastIndexOf("}");
-
-            if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-              cleanedResponse = cleanedResponse.slice(jsonStartIndex, jsonEndIndex + 1); // Extract the JSON object
-            } else {
-              throw new Error("Invalid JSON format in API response.");
-            }
+      if (q) {
+        const response = await ai.models.generateContent({
+          model: "gemini-2.0-flash",
+          temperature: 0.2,
+          contents:
+            "present the data: " +
+            q +
+            " in JSON format, include the headings (Name, Date in YY-MM-DD, Category, Amount), all headings are lowercase. Do not include any additional text outside the JSON object. name of JSON is data",
+        });
+    
+        // Manually clean and format the response
+        let cleanedResponse = response.text.trim(); // Remove leading/trailing whitespace
+    
+        // Find the start and end of the JSON object
+        const jsonStartIndex = cleanedResponse.indexOf("{");
+        const jsonEndIndex = cleanedResponse.lastIndexOf("}");
+    
+        if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
+          cleanedResponse = cleanedResponse.slice(
+            jsonStartIndex,
+            jsonEndIndex + 1
+          ); // Extract the JSON object
+        } else {
+          throw new Error("Invalid JSON format in API response.");
+        }
+    
+        // Parse the cleaned JSON
+        const parsedResponse = JSON.parse(cleanedResponse);
+    
+        // Add fullDate to each transaction
+        const transactionsWithFullDate = parsedResponse.data.map((transaction) => {
+          const [year, month, day] = transaction.date.split("-").map(Number);
+          const fullYear = year < 100 ? 2000 + year : year; // Handle 2-digit year (e.g., 25 -> 2025)
+          const localDate = new Date(fullYear, month - 1, day); // Month is 0-indexed
             
-            // Parse the cleaned JSON
-            console.log("Parsed Topics:", cleanedResponse);
-            setResponse(cleanedResponse);
-            setResponseData(JSON.parse(cleanedResponse));
-          }
+          const fullDate = Timestamp.fromDate(localDate); 
+          
+          return {
+            ...transaction,
+            fullDate: fullDate.toDate(),
+          };
+        });
+    
+        // Update the state with the processed transactions
+        setResponse(transactionsWithFullDate);
+        setResponseData({ data: transactionsWithFullDate });
+    
+        console.log("Transactions with Full Date:", transactionsWithFullDate);
+      }
     }
   
   const onDrop = (acceptedFiles) => {
@@ -124,9 +150,19 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
       {response && (
         <>
           <div className="text-lg my-2 bg-gray-500 rounded-3xl p-1">AI Corrected Data</div>
-          <div className="mt-4 max-h-50 overflow-auto">
-            {response}
-          </div>
+          {/* <div className="mt-4 max-h-50 overflow-auto">
+            <ul>
+              {response.map((transaction, index) => (
+                <li key={index}>
+                  <strong>Name:</strong> {transaction.name}, 
+                  <strong>Date:</strong> {transaction.date}, 
+                  <strong>Category:</strong> {transaction.category}, 
+                  <strong>Amount:</strong> {transaction.amount}, 
+                  <strong>Full Date:</strong> {transaction.fullDate}
+                </li>
+              ))}
+            </ul>
+          </div> */}
         </>
       )}
 
@@ -137,7 +173,7 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
               try {
                 return responseData.data.map((transaction, index) => (
                   <li key={index}>
-                    <strong>Name:</strong> {transaction.name}, <strong>Date:</strong> {new Date(transaction.date).toLocaleDateString()}, <strong>Category:</strong> {transaction.category}, <strong>Amount:</strong> {transaction.amount}
+                    <strong>Name:</strong> {transaction.name}, <strong>Date:</strong> {transaction.date}, <strong>Category:</strong> {transaction.category}, <strong>Amount:</strong> {transaction.amount}
                   </li>
                 ));
               } catch (error) {
@@ -160,7 +196,7 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
           </div>
           <div className="flex flex-nowrap overflow-auto no-scrollbar items-center">
             <div className="flex flex-col w-full h-60">
-              {responseData.data.map((transaction) => (
+              {responseData.data.map((transaction, index) => (
                   <div className="flex flex-row justify-left w-full bg-gray-600 rounded-xl m-1 p-2">
                     <div className='flex flex-row w-full'>
                     <div className="w-100">{transaction.name}</div>

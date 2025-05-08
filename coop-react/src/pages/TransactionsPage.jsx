@@ -95,14 +95,17 @@ const TransactionsPage = () => {
       // Apply date filter
       if (filterTransactions.filter === "Date" && filterTransactions.date) {
         const localDate = new Date(filterTransactions.date);
-  
+      
+        // Set startOfDay to 00:00:00
         const startOfDay = Timestamp.fromDate(
-          new Date(localDate.getTime())
+          new Date(localDate.getFullYear(), localDate.getMonth(), localDate.getDate(), 0, 0, 0)
         );
+      
+        // Set endOfDay to 23:59:59
         const endOfDay = Timestamp.fromDate(
-          new Date(localDate.getTime())
+          new Date(localDate.getFullYear(), localDate.getMonth(), localDate.getDate(), 23, 59, 59)
         );
-  
+      
         q = query(q, where("fullDate", ">=", startOfDay));
         q = query(q, where("fullDate", "<=", endOfDay));
       }
@@ -523,7 +526,7 @@ const TransactionsPage = () => {
         } else {
           type = "Deposit";
         }
-  
+
         const transactionsRef = collection(db, "transactions");
         const transactionDocRef = doc(transactionsRef);
         batch.set(transactionDocRef, {
@@ -531,8 +534,8 @@ const TransactionsPage = () => {
           amount: parseFloat(amount),
           account_number: viewedAccount?.account_number || "",
           user_id: user.uid,
-          date: new Date(date).toLocaleDateString(),
-          fullDate: Timestamp.fromDate(new Date(date)), // Store as Firestore Timestamp
+          date: date,
+          // fullDate: Timestamp.fromDate(new Date(date)), // fulldate areleady there.
           type: type,
         });
 
