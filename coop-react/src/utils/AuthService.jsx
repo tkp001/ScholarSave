@@ -1,4 +1,6 @@
 import React from 'react'
+import { SiSemanticscholar } from "react-icons/si";
+import '../App.css';
 import { Navigate, useLocation } from 'react-router-dom'
 import { useContext } from 'react'
 import { useEffect, useState } from 'react'
@@ -36,7 +38,11 @@ const AuthService = ({children}) => {
       }, [auth, updateUser, loading]);
     
     if (loading) {
-      return <div>Checking Access...</div>;
+      return <div className='flex bg-black text-white w-screen h-screen justify-center items-center'>
+        <div className="py-2 animate-float">
+          <SiSemanticscholar size={300} />
+        </div>
+      </div>;
     }
 
     if (!user && location.pathname !== '/auth') {

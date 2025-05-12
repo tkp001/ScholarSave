@@ -1,5 +1,6 @@
 import React from 'react'
 import App from '../App'
+import '../App.css'
 import { Navigate, Link, NavLink } from 'react-router-dom'
 import { SiGoogleanalytics } from "react-icons/si";
 

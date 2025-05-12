@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import '../App.css';
 import { GoogleGenAI } from "@google/genai";
 import { marked } from "marked";
 import ReactMarkdown from 'react-markdown';
@@ -135,27 +136,27 @@ function askSuggestedQuestion(q) {
 
 
 return (
-    <div className='flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white'>
+    <div className='flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white stagger-container'>
         <div className="flex flex-col items-center w-full h-100 p-10">
           <div className='text-5xl'>Learn About Finance</div>
           <div className='flex flex-row justify-around items-center '>
             <input
-              className="border-2 border-gray-500 rounded-xl m-1 p-1 w-150 my-5"
+              className="border-2 border-gray-500 rounded-xl m-1 p-1 w-150 my-5 scale-on-hover"
               type="text"
               name="search"
               value={question}
               placeholder="Ask a Question"
               onChange={(e) => setQuestion(e.target.value)}
             />
-            <button className='bg-gray-600 rounded-3xl w-20 h-8 ml-3' onClick={() => askQuestion(question)}>Ask</button>
+            <button className='bg-gray-600 rounded-3xl w-20 h-8 ml-3 scale-on-hover' onClick={() => askQuestion(question)}>Ask</button>
           </div>
 
           {(responseLoading || response) && (
-            <div className='flex flex-row w-230 h-180 mb-10'>
-              <div className='flex-nowrap overflow-auto no-scrollbar bg-gray-700 rounded-l-2xl p-4 mb-10 w-150 h-full'>
+            <div className='flex flex-row h-150 mb-10 fade-in'>
+              <div className='flex-nowrap overflow-auto no-scrollbar bg-gray-700 rounded-l-2xl p-4 mb-10 w-auto min-w-50 max-w-200 h-full'>
               
               {responseLoading ? (
-                  <div className='text-2xl'>Loading...</div>
+                  <div className='text-2xl fade-in'>Loading...</div>
                 ) : (
                   <>
                     {response && (
@@ -164,68 +165,74 @@ return (
                           className="markdown-body prose prose-lg max-w-250"
                           dangerouslySetInnerHTML={{ __html: formattedResponse }}
                         /> */}
-                        <ReactMarkdown>{response}</ReactMarkdown>
+                        <div className="prose prose-lg prose-invert max-w-none stagger-container">
+                          <ReactMarkdown>{response}</ReactMarkdown>
+                        </div>
                       </>
                     )}
                   </>
                 )}
               </div>
-              <div className='flex flex-col w-80 h-full bg-gray-700 rounded-r-2xl'>
+              <div className='flex flex-col w-80 min-w-80 h-full bg-gray-700 rounded-r-2xl'>
                 <div className='flex justify-center items-center h-20'>
                   <p className='text-xl'>Chat</p>
                 </div>
                 <div className='flex-nowrap overflow-auto no-scrollbar bg-gray-600 p-3 h-full'>
                   {chatResponseLoading ? (
-                    <div className='text-2xl'>Loading...</div>
+                    <div>
+                      <div className='text-2xl fade-in'>Loading...</div>
+                    </div>
                   ) : (
                     <>
                       {response && (
-                        <>
+                        <div className='stagger-container'>
                           <ReactMarkdown>{chatResponse}</ReactMarkdown>
-                        </>
+                        </div>
                       )}
                     </>
                   )}
                 </div>
                 <div className='flex flex-row justify-center items-center h-30'>
                   <input
-                    className="border-2 border-gray-500 rounded-xl m-1 p-1 w-50 my-5 h-10"
+                    className="border-2 border-gray-500 rounded-xl m-1 p-1 w-auto my-5 h-10 scale-on-hover"
                     type="text"
                     name="search"
                     value={chatQuestion}
                     placeholder="Ask a Question"
                     onChange={(e) => setChatQuestion(e.target.value)}
                   />
-                  <button className='bg-gray-600 rounded-3xl w-20 h-8 ml-1' onClick={() => askChat(chatQuestion)}>Ask</button>
+                  <button className='bg-gray-600 rounded-3xl w-20 h-8 ml-1 scale-on-hover' onClick={() => askChat(chatQuestion)}>Ask</button>
                 </div>
               </div>
             </div>
           )}
 
           <div className='text-3xl mb-5'>Suggested Topics</div>
-          <div className='flex flex-col bg-gray-700 w-170 h-auto rounded-3xl mb-5 p-5'>
+          <div className='flex flex-col bg-gray-700 w-170 h-auto rounded-3xl mb-5 p-5 stagger-container'>
             <div className='flex flex-row items-center'>
               <input
-                className="border-2 border-gray-500 rounded-xl m-1 p-1 w-150 my-5"
+                className="border-2 border-gray-500 rounded-xl m-1 p-1 w-150 my-5 scale-on-hover"
                 type="text"
                 name="search"
                 value={topic}
                 placeholder="Search for a Topic"
                 onChange={(e) => setTopic(e.target.value)}
               />
-              <button className='bg-gray-600 rounded-3xl w-20 h-8 ml-3' onClick={() => fetchSuggestedTopics(topic)}>Generate</button>
+              <button className='bg-gray-600 rounded-3xl w-20 h-8 ml-3 scale-on-hover' onClick={() => fetchSuggestedTopics(topic)}>Generate</button>
             </div>
 
             {topicsLoading && (<div className='text-2xl'>Loading...</div>)}
             {!topicsLoading && suggestedTopics.length == 0 && (<button className='bg-gray-600 rounded-3xl w-40 h-8' onClick={() => fetchSuggestedTopics()}>Fetch Topics</button>)}
             {!topicsLoading && suggestedTopics.map((topic, index) => (
-              <div
-                key={index}
-                className='flex flex-col bg-gray-600 rounded-xl p-4 mb-4'
-                onClick={() => askSuggestedQuestion(topic.title + " : " + topic.description)}
-              >
-                <div className='text-2xl font-bold mb-2'>{topic.title}</div>
-                <div className='text-lg'>{topic.description}</div>
+              <div>
+                <div
+                  key={index}
+                  className='flex flex-col bg-gray-600 rounded-xl p-4 mb-2 scale-on-hover'
+                  onClick={() => askSuggestedQuestion(topic.title + " : " + topic.description)}
+                >
+                  <div className='text-xl font-bold mb-2'>{topic.title}</div>
+                  <div className='text-md'>{topic.description}</div>
+                </div>
               </div>
             ))}
           </div>

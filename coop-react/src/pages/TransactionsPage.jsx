@@ -1,4 +1,5 @@
 import React, { use, useEffect, useState } from 'react';
+import '../App.css';
 import { db } from '../firebaseConfig';
 import { Timestamp, collection, getDocs, getDoc, doc, deleteDoc, updateDoc, addDoc, query, where, orderBy,writeBatch } from 'firebase/firestore';
 import UserContext from '../UserContext';
@@ -14,7 +15,7 @@ const TransactionsPage = () => {
   const {accounts} = useContext(UserContext);
   const {updateViewedAccount} = useContext(UserContext);
   const {fetchAccounts} = useContext(UserContext);
-  
+  const [animateKey, setAnimateKey] = useState(0); 
   // Transactions
 
   const [addTransaction, setAddTransaction] = useState(false);
@@ -638,24 +639,24 @@ const TransactionsPage = () => {
 
           <div className="text-2xl mb-1">View</div>   
 
-          <>
+          <div key={animateKey} className="stagger-container">
             <TransactionList
               transactions={transactions}
               filterTransactions={filterTransactions}
               handleFilterTransaction={handleFilterTransaction}
               handleDeleteTransaction={handleDeleteTransaction}
             />
-          </>
+          </div>
           
           <div className='flex flex-row my-6'>
             <button
-              className="w-fit h-8 min-h-8 bg-green-600 rounded-4xl px-2 mr-3"
+              className="w-fit h-8 min-h-8 bg-green-600 rounded-4xl px-2 mr-3 scale-on-hover"
               onClick={() => setAddTransaction(!addTransaction)}
             >
               Add Transaction
             </button>
             <button
-              className="w-fit h-8 min-h-8 bg-green-600 rounded-4xl px-2"
+              className="w-fit h-8 min-h-8 bg-green-600 rounded-4xl px-2 scale-on-hover"
               onClick={() => setTransferMoney(!transferMoney)}
             >
               Transfer Money
@@ -666,7 +667,7 @@ const TransactionsPage = () => {
 
           <div className='flex flex-row'>
             {addTransaction && (
-                <div className="bg-gray-700 p-5 w-100 h-115 rounded-xl mr-4">
+                <div className="bg-gray-700 p-5 w-100 h-115 rounded-xl mr-4 fade-in">
                   <h3 className="text-2xl mb-3">Add New Transaction</h3>
                   {/* <select
                     className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
@@ -770,7 +771,7 @@ const TransactionsPage = () => {
               )}
 
             {transferMoney && (
-              <div className="bg-gray-700 p-5 w-100 h-100 rounded-xl">
+              <div className="bg-gray-700 p-5 w-100 h-100 rounded-xl fade-in">
                 <h3 className="text-2xl mb-3">Transfer Money</h3>
                 <div className='w-full text-md text-center my-1 font-bold'>From</div>
                 <select

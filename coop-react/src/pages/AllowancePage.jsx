@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import '../App.css';
 import { db } from '../firebaseConfig';
 import { collection, getDocs, getDoc, addDoc, deleteDoc, updateDoc, doc, query, where } from 'firebase/firestore';
 import UserContext from '../UserContext';
@@ -13,7 +14,7 @@ const AllowancePage = () => {
   const {accounts} = useContext(UserContext);
   const {viewedAccount} = useContext(UserContext);
   const {fetchAccounts} = useContext(UserContext);
-
+  const [animateKey, setAnimateKey] = useState(0);
   const [addBudget, setAddBudget] = useState(false);
   const [budgets, setBudgets] = useState([]);
   const [budgetForm, setBudgetForm] = useState({
@@ -164,6 +165,7 @@ const AllowancePage = () => {
     if (viewedAccount) {
       fetchBudgets();
       fetchSavings();
+      setAnimateKey((prevKey) => prevKey + 1); 
     }
   }, [viewedAccount]);
 
@@ -408,7 +410,7 @@ const AllowancePage = () => {
         {viewedAccount && (
           <>
           {budgets.length > 0 ? (
-          <div className="bg-gray-700 p-5 rounded-xl mt-5">
+          <div key={animateKey} className="bg-gray-700 p-5 rounded-xl mt-5 stagger-container">
             <h3 className="text-2xl mb-3">Budgets</h3>
             <ul>
               {budgets.map((budget) => {
@@ -416,7 +418,7 @@ const AllowancePage = () => {
                 const progress = (currentAmount.spent / budget.amount) * 100; // Calculate progress as a percentage
 
                 return (
-                  <li key={budget.id} className="mb-3">
+                  <li key={budget.id} className="mb-3 stagger-container">
                     <BudgetWidget
                       budget={budget}
                       handleDeleteBudget={handleDeleteBudget}
@@ -437,14 +439,14 @@ const AllowancePage = () => {
             </ul>
           </div>
         ) : (
-          <div className="bg-gray-700 p-5 rounded-xl mt-5">
+          <div className="bg-gray-700 p-5 rounded-xl mt-5 stagger-container">
             <h3 className="text-2xl mb-3">No Budgets Found</h3>
             <p>You haven't added any budgets yet.</p>
           </div>
         )}
 
         {savings.length > 0 ? (
-          <div className="bg-gray-700 p-5 rounded-xl mt-5">
+          <div className="bg-gray-700 p-5 rounded-xl mt-5 stagger-container">
             <h3 className="text-2xl mb-3">Savings</h3>
             <ul>
               {savings.map((saving) => {
@@ -452,7 +454,7 @@ const AllowancePage = () => {
                 const progress = (savedAmount / saving.amount) * 100; // Calculate progress as a percentage
 
                 return (
-                  <li key={saving.id} className="mb-3">
+                  <li key={saving.id} className="mb-3 stagger-container">
                     <SavingWidget
                       saving={saving}
                       name={saving.name}
@@ -469,7 +471,7 @@ const AllowancePage = () => {
             </ul>
           </div>
         ) : (
-          <div className="bg-gray-700 p-5 rounded-xl mt-5">
+          <div className="bg-gray-700 p-5 rounded-xl mt-5 stagger-container">
             <h3 className="text-2xl mb-3">No Savings Found</h3>
             <p>You haven't added any savings yet.</p>
           </div>
@@ -479,13 +481,13 @@ const AllowancePage = () => {
 
           <div className="flex flex-row">
             <button
-              className="w-fit h-8 min-h-8 bg-green-600 rounded-4xl px-2 mr-3 my-6"
+              className="w-fit h-8 min-h-8 bg-green-600 rounded-4xl px-2 mr-3 my-6 scale-on-hover"
               onClick={() => setAddBudget(!addBudget)}
             >
               Add Budget
             </button>
             <button
-              className="w-fit h-8 min-h-8 bg-green-600 rounded-4xl px-2 mr-3 my-6"
+              className="w-fit h-8 min-h-8 bg-green-600 rounded-4xl px-2 mr-3 my-6 scale-on-hover"
               onClick={() => setAddSaving(!addSaving)}
             >
               Add Saving
@@ -494,7 +496,7 @@ const AllowancePage = () => {
 
           <div className="flex flex-row">
           {addBudget && (
-            <div className="bg-gray-700 p-5 rounded-xl mb-5 mr-5 w-100">
+            <div className="bg-gray-700 p-5 rounded-xl mb-5 mr-5 w-100 fade-in">
               <h3 className="text-2xl mb-3">Add Budget</h3>
               <input
                 className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
@@ -545,13 +547,13 @@ const AllowancePage = () => {
                 ))}
               </select>
               <button
-                className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 mr-3"
+                className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 mr-3 scale-on-hover"
                 onClick={handleAddBudget}
               >
                 Save Budget
               </button>
               <button
-                className="w-fit h-8 bg-red-600 rounded-4xl px-2 my-5"
+                className="w-fit h-8 bg-red-600 rounded-4xl px-2 my-5 scale-on-hover"
                 onClick={() => setAddBudget(!addBudget)}
               >
                 Cancel
@@ -560,7 +562,7 @@ const AllowancePage = () => {
           )}
 
           {addSaving && (
-            <div className="bg-gray-700 p-5 rounded-xl mb-5 w-100 h-80">
+            <div className="bg-gray-700 p-5 rounded-xl mb-5 w-100 h-80 fade-in">
               <h3 className="text-2xl mb-3">Add Saving</h3>
               <input
                 className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
@@ -595,13 +597,13 @@ const AllowancePage = () => {
                 onChange={handleSavingForm}
               />
               <button
-                className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 mr-3"
+                className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 mr-3 scale-on-hover"
                 onClick={handleAddSaving}
               >
                 Save Saving
               </button>
               <button
-                className="w-fit h-8 bg-red-600 rounded-4xl px-2 my-5"
+                className="w-fit h-8 bg-red-600 rounded-4xl px-2 my-5 scale-on-hover"
                 onClick={() => setAddSaving(false)}
               >
                 Cancel

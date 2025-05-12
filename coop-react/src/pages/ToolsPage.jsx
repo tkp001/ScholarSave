@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import '../App.css';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend } from 'chart.js';
 
@@ -13,11 +14,11 @@ const ToolsPage = () => {
 
 
   return (
-    <div className='flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white'>
+    <div className='flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white stagger-container'>
       <div className="flex flex-col items-center w-full h-400 p-10">
         <div className='text-5xl mb-10'>Financial Tools</div>
 
-        <div className='flex flex-col bg-gray-700 w-200 h-fit rounded-3xl mb-5'>
+        <div className='flex flex-col bg-gray-700 w-200 h-fit rounded-3xl mb-5 stagger-container'>
           <div
             className='flex flex-row items-center h-12 cursor-pointer'
             onClick={() => toggleContent(0)}
@@ -32,7 +33,7 @@ const ToolsPage = () => {
           )}
         </div>
 
-        <div className='flex flex-col bg-gray-700 w-200 rounded-3xl mb-5'>
+        <div className='flex flex-col bg-gray-700 w-200 rounded-3xl mb-5 stagger-container'>
           <div
             className='flex flex-row items-center h-12 cursor-pointer'
             onClick={() => toggleContent(1)}
@@ -47,7 +48,7 @@ const ToolsPage = () => {
           )}
         </div>
 
-        <div className='flex flex-col bg-gray-700 w-200 rounded-3xl mb-5'>
+        <div className='flex flex-col bg-gray-700 w-200 rounded-3xl mb-5 stagger-container'>
           <div
             className='flex flex-row items-center h-12 cursor-pointer'
             onClick={() => toggleContent(2)}

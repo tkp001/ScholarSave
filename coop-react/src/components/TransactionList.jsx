@@ -1,4 +1,5 @@
 import React from 'react';
+import '../App.css';
 import { FaTrash } from "react-icons/fa";
 
 
@@ -9,7 +10,7 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
         <div className="flex flex-col flex-wrap p-1">
           <div>
           <select
-                className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-60"
+                className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-60 scale-on-hover"
                 name="filter"
                 value={filterTransactions.filter}
                 onChange={handleFilterTransaction}
@@ -20,7 +21,7 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
                 <option selected>Amount Range</option>
             </select>
             <select
-                className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-40"
+                className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-40 scale-on-hover"
                 name="type"
                 onChange={handleFilterTransaction}
               >
@@ -55,7 +56,7 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
                   
             {filterTransactions.filter == 'Date' && (
               <input
-              className="border-2 border-gray-500 rounded-xl m-1 p-1"
+              className="border-2 border-gray-500 rounded-xl m-1 p-1 fade-in"
               type="date"
               name="date"
               value={filterTransactions.date}
@@ -65,14 +66,14 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
             {filterTransactions.filter == 'Date Range' && (
               <>
                 <input
-                className="border-2 border-gray-500 rounded-xl m-1 p-1"
+                className="border-2 border-gray-500 rounded-xl m-1 p-1 fade-in"
                 type="date"
                 name="startDate"
                 value={filterTransactions.startDate}
                 onChange={handleFilterTransaction}
                 />
                 <input
-                className="border-2 border-gray-500 rounded-xl m-1 p-1"
+                className="border-2 border-gray-500 rounded-xl m-1 p-1 fade-in"
                 type="date"
                 name="endDate"
                 value={filterTransactions.endDate}
@@ -83,7 +84,7 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
             {filterTransactions.filter == 'Amount Range' && (
               <>
               <input
-                className="border-2 border-gray-500 rounded-xl m-1 p-1 w-20"
+                className="border-2 border-gray-500 rounded-xl m-1 p-1 w-20 fade-in"
                 type="number"
                 name="amountMin"
                 value={filterTransactions.amountMin}
@@ -91,7 +92,7 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
                 onChange={handleFilterTransaction}
                 />
                 <input
-                  className="border-2 border-gray-500 rounded-xl m-1 p-1 w-20"
+                  className="border-2 border-gray-500 rounded-xl m-1 p-1 w-20 fade-in"
                   type="number"
                   name="amountMax"
                   value={filterTransactions.amountMax}
@@ -102,7 +103,7 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
             )}   
             {filterTransactions.filter != 'None' && filterTransactions.filter != 'Date' && (
               <select
-              className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-20"
+              className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-20 fade-in"
               name="filterOrder"
               value={filterTransactions.filterOrder}
               onChange={handleFilterTransaction}
@@ -126,14 +127,14 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
                 key={transaction.id}
                 
               >
-                <div className="flex flex-row justify-left w-full bg-gray-600 rounded-xl m-1 p-2">
+                <div className="flex flex-row justify-left w-full bg-gray-600 rounded-xl m-1 p-2 stagger-container">
                   <div className='flex w-full'>
                     <div className="w-100">{transaction.name}</div>
                     <div className="w-40 text-xs">Local: {transaction.fullDate?.toDate().toISOString()}, Timestamp: {transaction.fullDate?.toDate().toLocaleString()}</div>
                     <div className="w-60">{transaction.category}</div>
                     <div className='w-15'>${transaction.amount}</div>
 
-                    <button onClick={() => handleDeleteTransaction(transaction.id)} className="bg-red-600 rounded-4xl px-2 ml-2">
+                    <button onClick={() => handleDeleteTransaction(transaction.id)} className="bg-red-600 rounded-4xl px-2 ml-2 scale-on-hover">
                       <FaTrash />
                     </button>
                   </div>

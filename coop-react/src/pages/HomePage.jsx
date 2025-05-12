@@ -7,6 +7,8 @@ import { Bar, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import 'chart.js/auto'; // MUST INCLUDE TO DESTROY UPON UNMOUNTING
 import AccountViewer from '../components/AccountViewer';
+import jsPDF from "jspdf";
+import { motion } from "framer-motion";
 // import { Chart } from 'chart.js/auto';
 
 // Register Chart.js components
@@ -19,6 +21,7 @@ const HomePage = () => {
   const {fetchAccounts} = useContext(UserContext);
   const {accounts} = useContext(UserContext);
   const [aiInsight, setAiInsight] = useState(null);
+  const [animateKey, setAnimateKey] = useState(0);
 
   const api = import.meta.env.VITE_API_GOOGLE_GENAI
   const ai = new GoogleGenAI({ apiKey: api });
@@ -257,6 +260,7 @@ const HomePage = () => {
   useEffect(() => {
     // Check if all required data is available
     setAiInsight(null); // Reset when account changes
+    setAnimateKey((prevKey) => prevKey + 1);
     if (
       viewedAccount &&
       monthlyBalance.length > 0 &&
@@ -276,54 +280,105 @@ const HomePage = () => {
     }
   }, [viewedAccount]);
 
-  
+  function exportSummariesToPDF() {
+    const doc = new jsPDF();
+
+    // Add a title
+    doc.setFontSize(18);
+    doc.text("ScholarSave Summaries", 10, 10);
+
+    // Add Monthly Balance
+    doc.setFontSize(14);
+    doc.text("Monthly Balance:", 10, 20);
+    monthlyBalances.forEach((data, index) => {
+      doc.text(`Month ${data.month}: ${data.balance.toFixed(2)}`, 10, 30 + index * 10);
+    });
+
+    // Add Top 5 Spending
+    doc.text("Top 5 Spending:", 10, 30 + monthlyBalances.length * 10);
+    top5Spending.forEach(([category, amount], index) => {
+      doc.text(`${index + 1}. ${category}: $${Math.abs(amount).toFixed(2)}`, 10, 40 + monthlyBalances.length * 10 + index * 10);
+    });
+
+    // Add Top 5 Income
+    const incomeStartY = 40 + monthlyBalances.length * 10 + top5Spending.length * 10;
+    doc.text("Top 5 Income:", 10, incomeStartY);
+    top5Income.forEach(([category, amount], index) => {
+      doc.text(`${index + 1}. ${category}: $${amount.toFixed(2)}`, 10, incomeStartY + 10 + index * 10);
+    });
+
+    // Add Disclaimer
+    const disclaimerY = incomeStartY + 10 + top5Income.length * 10;
+    doc.setFontSize(10);
+    doc.text(
+      "Disclaimer: This summary is generated for informational purposes only and is not financial advice.",
+      10,
+      disclaimerY
+    );
+
+    // Save the PDF
+    doc.save("ScholarSave_Summaries.pdf");
+  }
+
 
   return (
-    <div className='flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white'>
+    <div className="flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white">
       <div className="flex flex-col w-full h-400 p-10">
         <AccountViewer />
-        
-        <div className='text-3xl my-3'>Welcome {user.displayName}</div>
-        
+
+        <div className="text-3xl my-3 fade-in">
+          Welcome {user?.displayName || 'User'}
+        </div>
 
         {viewedAccount && (
-          <>
+          <div
+            key={animateKey} // Use the animation key to re-render the div
+            className="flex flex-col stagger-container"
+          >
+            <div className="flex flex-col items-center bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5 fade-in scale-on-hover">
+              <div className="text-xl mb-2">Export Summaries</div>
+              <button
+                className="bg-blue-500 w-180 text-white font-bold py-2 px-4 rounded scale-on-hover"
+                onClick={exportSummariesToPDF}
+              >
+                Export as PDF
+              </button>
+            </div>
+
             {aiInsight && (
-              <div className='rounded-3xl flex flex-col bg-gray-700 w-200 h-fit py-5 p-3 mb-2'>
-                <div className='text-xl mb-2'>ScholarSave Insights AI</div>
-                <div className='text-md'>{aiInsight}</div>
+              <div className="rounded-3xl flex flex-col bg-gray-700 w-200 h-fit my-2 py-5 p-3 fade-in">
+                <div className="text-xl mb-2">ScholarSave Insights AI</div>
+                <div className="text-md">{aiInsight}</div>
               </div>
             )}
-            <div className='flex flex-col bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5'>   
-              <div className='text-xl mb-2'>Monthly Balance</div>
+
+            <div className="flex flex-col bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5 fade-in">
+              <div className="text-xl mb-2">Monthly Balance</div>
               <Bar data={BDMonthlyBalances} options={BOMonthlyBalanceChange} />
             </div>
 
-            <div className='flex flex-col bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5'>   
-              <div className='text-xl mb-2'>Monthly Balance Change</div>
+            <div className="flex flex-col bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5 fade-in">
+              <div className="text-xl mb-2">Monthly Balance Change</div>
               <Bar data={BDMonthlyBalanceChange} options={BOMonthlyBalanceChange} />
             </div>
 
-            <div className='flex flex-row my-2'>
-              <div className='flex flex-col bg-gray-700 w-100 h-fit rounded-3xl mr-2 p-5'>
-                <div className='text-xl mb-2'>Top 5 Spending</div>
+            <div className="flex flex-row my-2">
+              <div className="flex flex-col bg-gray-700 w-100 h-fit rounded-3xl mr-2 p-5 fade-in">
+                <div className="text-xl mb-2">Top 5 Spending</div>
                 <Pie data={spendingData} />
               </div>
 
-              <div className='flex flex-col bg-gray-700 w-100 h-fit rounded-3xl p-5'>
-                <div className='text-xl mb-2'>Top 5 Income</div>
+              <div className="flex flex-col bg-gray-700 w-100 h-fit rounded-3xl p-5 fade-in">
+                <div className="text-xl mb-2">Top 5 Income</div>
                 <Pie data={incomeData} />
               </div>
             </div>
 
-            <div className='flex flex-col bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5'>
-              <div className='text-xl mb-2'>Category Change Per Month</div>
-              <Bar
-                data={categoryChangeData}
-                options={BOcategoryChangeData}
-              />
+            <div className="flex flex-col bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5 fade-in">
+              <div className="text-xl mb-2">Category Change Per Month</div>
+              <Bar data={categoryChangeData} options={BOcategoryChangeData} />
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

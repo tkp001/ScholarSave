@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "../App.css";
 import { useDropzone } from "react-dropzone";
 import csv from "csvtojson";
 import { GoogleGenAI } from "@google/genai";
@@ -108,7 +109,7 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
   });
 
   return (
-    <div className="bg-gray-700 my-2 p-3 rounded-3xl">
+    <div className="bg-gray-700 my-2 p-3 rounded-3xl stagger-container">
       <div className="text-lg mb-2">Import Transactions</div>
       
       <div
@@ -124,13 +125,13 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
         {isDragActive ? (
           <p>Drop the files here ...</p>
         ) : (
-          <p>Drag 'n' drop a CSV file here, or click to select one</p>
+          <p className="scale-on-hover">Drag 'n' drop a CSV file here, or click to select one</p>
         )}
       </div>
 
       {parsedData.length > 0 && (
         <>
-          <h3 className="text-lg my-2 bg-gray-500 rounded-3xl p-1">Parsed Data:</h3>
+          <h3 className="text-lg my-2 bg-gray-500 rounded-xl p-1">Parsed Data:</h3>
           <div className="mt-4 max-h-50 overflow-auto">
             <ul>
               {parsedData.map((row, index) => (
@@ -144,12 +145,12 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
       )}
       
       {!response && parsedData.length > 0 && (
-        <div className="text-lg my-2 bg-yellow-500 rounded-3xl p-1">Correcting Data..</div>
+        <div className="text-lg my-2 bg-yellow-500 rounded-xl p-1">Correcting Data..</div>
       )}
 
       {response && (
         <>
-          <div className="text-lg my-2 bg-gray-500 rounded-3xl p-1">AI Corrected Data</div>
+          <div className="text-lg my-2 bg-gray-500 rounded-xl p-1">AI Corrected Data</div>
           {/* <div className="mt-4 max-h-50 overflow-auto">
             <ul>
               {response.map((transaction, index) => (
@@ -187,7 +188,7 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
 
       {response && (
         <>
-          <div className="text-lg my-2 bg-green-500 rounded-3xl p-1">Transaction Preview</div>
+          <div className="text-lg my-2 bg-green-500 rounded-xl p-1">Transaction Preview</div>
           <div className="flex flex-row p-1">
             <div className="w-100">Name</div>
             <div className="w-40">Date</div>
@@ -195,20 +196,22 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
             <div>Amount</div>
           </div>
           <div className="flex flex-nowrap overflow-auto no-scrollbar items-center">
-            <div className="flex flex-col w-full h-60">
+            <div className="flex flex-col w-full h-60 stagger-container">
               {responseData.data.map((transaction, index) => (
                   <div className="flex flex-row justify-left w-full bg-gray-600 rounded-xl m-1 p-2">
-                    <div className='flex flex-row w-full'>
-                    <div className="w-100">{transaction.name}</div>
-                    <div className="w-40">{transaction.date}</div>
-                    <div className="w-60">{transaction.category}</div>
-                    <div className='w-15'>${transaction.amount}</div>
+                      <div className='flex flex-row w-full'>
+                        <div className="w-100">{transaction.name}</div>
+                        <div className="w-40">{transaction.date}</div>
+                        <div className="w-60">{transaction.category}</div>
+                        <div className='w-15'>${transaction.amount}</div>
+                      </div>
                   </div>
-               </div>
               ))}
             </div>
           </div>
-          <button className="bg-green-600 rounded-3xl w-20 h-8 my-3" onClick={acceptTransactions}>Accept</button>
+          <div>
+            <button className="bg-green-600 rounded-3xl w-20 h-8 my-3 scale-on-hover" onClick={acceptTransactions}>Accept</button>
+          </div>
         </> 
       )}
         

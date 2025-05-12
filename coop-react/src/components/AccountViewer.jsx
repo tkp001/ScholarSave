@@ -3,6 +3,7 @@ import UserContext from '../UserContext';
 import { useState, useEffect, useContext } from 'react';
 import { db } from '../firebaseConfig';
 import { collection, getDocs, query, where } from 'firebase/firestore';
+import '../App.css';
 
 const AccountViewer = () => {
   const { user } = useContext(UserContext);
@@ -32,7 +33,7 @@ const AccountViewer = () => {
     <div className="bg-gray-600 p-2 px-5 rounded-3xl w-200 mb-5">
       <div className="text-2xl">Choose An Account:</div>
       <select
-            className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-100"
+            className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-100 scale-on-hover"
             name="accountSelector"
             value={viewedAccount?.id || ""}
             onChange={(e) => changeViewedAccount(e)}
