@@ -8,7 +8,8 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 import 'chart.js/auto'; // MUST INCLUDE TO DESTROY UPON UNMOUNTING
 import AccountViewer from '../components/AccountViewer';
 import jsPDF from "jspdf";
-import { motion } from "framer-motion";
+import { PulseLoader } from "react-spinners";
+
 // import { Chart } from 'chart.js/auto';
 
 // Register Chart.js components
@@ -20,6 +21,7 @@ const HomePage = () => {
   const {updateViewedAccount} = useContext(UserContext);
   const {fetchAccounts} = useContext(UserContext);
   const {accounts} = useContext(UserContext);
+  const {toastMessage} = useContext(UserContext);
   const [aiInsight, setAiInsight] = useState(null);
   const [animateKey, setAnimateKey] = useState(0);
 
@@ -334,49 +336,85 @@ const HomePage = () => {
           <div
             key={animateKey} // Use the animation key to re-render the div
             className="flex flex-col stagger-container"
-          >
-            <div className="flex flex-col items-center bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5 fade-in scale-on-hover">
-              <div className="text-xl mb-2">Export Summaries</div>
-              <button
-                className="bg-blue-500 w-180 text-white font-bold py-2 px-4 rounded scale-on-hover"
-                onClick={exportSummariesToPDF}
-              >
-                Export as PDF
-              </button>
-            </div>
+          > 
+              <div className="flex flex-col items-center bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5 fade-in scale-on-hover">
+                <div className="text-xl mb-2">Export Summaries</div>
+                {aiInsight && (
+                  <div className='fade-in'>
+                    <button
+                      className="bg-blue-500 w-180 text-white font-bold py-2 px-4 rounded scale-on-hover"
+                      onClick={exportSummariesToPDF}
+                    >
+                      Export as PDF
+                    </button>
+                  </div>
+                )}
+                <PulseLoader
+                  className='my-2 fade-in'
+                  color={"white"}
+                  loading={!aiInsight}
+                  size={15}
+                />
+              </div>
 
-            {aiInsight && (
               <div className="rounded-3xl flex flex-col bg-gray-700 w-200 h-fit my-2 py-5 p-3 fade-in">
                 <div className="text-xl mb-2">ScholarSave Insights AI</div>
-                <div className="text-md">{aiInsight}</div>
+                {aiInsight && (
+                  <div className="fade-in">{aiInsight}</div>
+                )}
+                <PulseLoader
+                  className='justify-center my-2 fade-in'
+                  color={"white"}
+                  loading={!aiInsight}
+                  size={15}
+                />
               </div>
-            )}
 
             <div className="flex flex-col bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5 fade-in">
               <div className="text-xl mb-2">Monthly Balance</div>
-              <Bar data={BDMonthlyBalances} options={BOMonthlyBalanceChange} />
+              {BDMonthlyBalances.datasets[0].data.length > 0 ? (
+                <Bar data={BDMonthlyBalances} options={BOMonthlyBalanceChange} />
+              ) : (
+                <div className="text-center text-gray-400">No data available</div>
+              )}
             </div>
 
             <div className="flex flex-col bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5 fade-in">
               <div className="text-xl mb-2">Monthly Balance Change</div>
-              <Bar data={BDMonthlyBalanceChange} options={BOMonthlyBalanceChange} />
+              {BDMonthlyBalanceChange.datasets[0].data.length > 0 ? (
+                <Bar data={BDMonthlyBalanceChange} options={BOMonthlyBalanceChange} />
+              ) : (
+                <div className="text-center text-gray-400">No data available</div>
+              )}
             </div>
 
             <div className="flex flex-row my-2">
-              <div className="flex flex-col bg-gray-700 w-100 h-fit rounded-3xl mr-2 p-5 fade-in">
+              <div className="flex flex-col bg-gray-700 w-99 h-fit rounded-3xl mr-2 p-5 fade-in">
                 <div className="text-xl mb-2">Top 5 Spending</div>
-                <Pie data={spendingData} />
+                {top5Spending.length > 0 ? (
+                  <Pie data={spendingData} />
+                ) : (
+                  <div className="text-center text-gray-400">No data available</div>
+                )}
               </div>
 
-              <div className="flex flex-col bg-gray-700 w-100 h-fit rounded-3xl p-5 fade-in">
+              <div className="flex flex-col bg-gray-700 w-99 h-fit rounded-3xl p-5 fade-in">
                 <div className="text-xl mb-2">Top 5 Income</div>
-                <Pie data={incomeData} />
+                {top5Income.length > 0 ? (
+                  <Pie data={incomeData} />
+                ) : (
+                  <div className="text-center text-gray-400">No data available</div>
+                )}
               </div>
             </div>
 
             <div className="flex flex-col bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5 fade-in">
               <div className="text-xl mb-2">Category Change Per Month</div>
-              <Bar data={categoryChangeData} options={BOcategoryChangeData} />
+              {categoryChangeData.labels.length > 0 ? (
+                <Bar data={categoryChangeData} options={BOcategoryChangeData} />
+              ) : (
+                <div className="text-center text-gray-400">No data available</div>
+              )}
             </div>
           </div>
         )}

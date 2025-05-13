@@ -4,6 +4,8 @@ import { collection, getDoc, doc, addDoc, deleteDoc } from 'firebase/firestore';
 import UserContext from '../UserContext';
 import AccountViewer from '../components/AccountViewer';
 import '../App.css';
+import { PulseLoader } from 'react-spinners';
+import { toast } from 'react-toastify';
 
 const BalancePage = () => {
   const { user } = useContext(UserContext);
@@ -11,6 +13,7 @@ const BalancePage = () => {
   const { updateViewedAccount } = useContext(UserContext);
   const [lastTransactionDetails, setLastTransactionDetails] = useState(null);
   const { fetchAccounts } = useContext(UserContext);
+  const { toastMessage } = useContext(UserContext);
 
   const [newAccount, setNewAccount] = useState(false);
   const [accountForm, setAccountForm] = useState({
@@ -24,6 +27,55 @@ const BalancePage = () => {
   });
 
   const [animateKey, setAnimateKey] = useState(0); // State to trigger animation
+
+  // function toastMessage(message, type) {
+  //   if (type === "error") {
+  //     toast.error(message, {
+  //       position: "top-right",
+  //       autoClose: 5000,
+  //       hideProgressBar: false,
+  //       closeOnClick: false,
+  //       pauseOnHover: true,
+  //       draggable: false,
+  //       progress: undefined,
+  //       theme: "colored",
+  //     });
+  //   } else if (type === "success") {
+  //     toast.success(message, {
+  //       position: "top-right",
+  //       autoClose: 5000,
+  //       hideProgressBar: false,
+  //       closeOnClick: false,
+  //       pauseOnHover: true,
+  //       draggable: false,
+  //       progress: undefined,
+  //       theme: "colored",
+
+  //     });
+  //   } else if (type === "warning") {
+  //     toast.warn(message, {
+  //       position: "top-right",
+  //       autoClose: 5000,
+  //       hideProgressBar: false,
+  //       closeOnClick: false,
+  //       pauseOnHover: true,
+  //       draggable: false,
+  //       progress: undefined,
+  //       theme: "colored",
+  //     });
+  //   } else {
+  //     toast(message, {
+  //       position: "top-right",
+  //       autoClose: 5000,
+  //       hideProgressBar: false,
+  //       closeOnClick: false,
+  //       pauseOnHover: true,
+  //       draggable: false,
+  //       progress: undefined,
+  //       theme: "colored",
+  //     });
+  //   }
+  // }
 
   async function fetchLastTransaction(transactionId) {
     if (!transactionId || transactionId === "N/A") {
@@ -43,6 +95,7 @@ const BalancePage = () => {
       }
     } catch (error) {
       console.error("Error fetching transaction details: ", error);
+      toastMessage("Error fetching transaction details", "error");
       setLastTransactionDetails(null);
     }
   }
@@ -64,16 +117,17 @@ const BalancePage = () => {
 
   const addNewAccount = async () => {
     if (!accountForm.nickname || !accountForm.account_number || !accountForm.balance) {
-      alert("All fields are required. Please fill out the form completely.");
+      toastMessage("All fields are required", "warning");
     } else {
       try {
         const accountsRef = collection(db, "accounts");
         await addDoc(accountsRef, accountForm);
-        alert("New account added successfully!");
+        toastMessage("New account added successfully!", "success");
         setNewAccount(false);
         fetchAccounts();
       } catch (error) {
         console.error("Error adding new account: ", error);
+        toastMessage("Error adding new account", "error");
       }
     }
   };
@@ -87,11 +141,12 @@ const BalancePage = () => {
       try {
         const accountDocRef = doc(db, "accounts", viewedAccount.id);
         await deleteDoc(accountDocRef);
-        alert("Account deleted successfully!");
+        toastMessage("Account deleted successfully!", "success");
         updateViewedAccount(null);
         fetchAccounts();
       } catch (error) {
         console.error("Error deleting account: ", error);
+        toastMessage("Error deleting account", "error");
       }
     }
   };
@@ -114,12 +169,14 @@ const BalancePage = () => {
 
             <div className="text-3xl fade-in">Last Transaction</div>
             {lastTransactionDetails ? (
-              <div className="text-2xl mb-10 fade-in">
-                <p className="text-sm">ID: {viewedAccount.last_transaction}</p>
-                <p>Name: {lastTransactionDetails.name}</p>
-                <p>Amount: ${lastTransactionDetails.amount}</p>
-                <p>Category: {lastTransactionDetails.category}</p>
-              </div>
+              <>
+                <div className="text-2xl mb-10 fade-in">
+                  <p className="text-sm">ID: {viewedAccount.last_transaction}</p>
+                  <p>Name: {lastTransactionDetails.name}</p>
+                  <p>Amount: ${lastTransactionDetails.amount}</p>
+                  <p>Category: {lastTransactionDetails.category}</p>
+                </div>
+              </>
             ) : (
               <div className="text-2xl mb-10 fade-in">No transaction details available.</div>
             )}

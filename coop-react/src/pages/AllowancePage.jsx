@@ -8,12 +8,14 @@ import { useContext } from 'react';
 import BudgetWidget from '../components/BudgetWidget';
 import SavingWidget from '../components/SavingWidget';
 import AccountViewer from '../components/AccountViewer';
+import { toast } from 'react-toastify';
 
 const AllowancePage = () => {
   const { user } = useContext(UserContext);
   const {accounts} = useContext(UserContext);
   const {viewedAccount} = useContext(UserContext);
   const {fetchAccounts} = useContext(UserContext);
+  const {toastMessage} = useContext(UserContext);
   const [animateKey, setAnimateKey] = useState(0);
   const [addBudget, setAddBudget] = useState(false);
   const [budgets, setBudgets] = useState([]);
@@ -83,7 +85,7 @@ const AllowancePage = () => {
 
   async function handleAddBudget() {
   if (!budgetForm.name || !budgetForm.category || !budgetForm.amount || !budgetForm.startDate || !budgetForm.endDate) {
-    alert("Please fill out all fields.");
+    toastMessage("Please fill out all fields.", "warning");
     return;
   }
 
@@ -96,12 +98,12 @@ const AllowancePage = () => {
       account_number: viewedAccount.account_number,
     });
 
-    alert("Budget added successfully!");
+    toastMessage("Budget added successfully!", "success");
     setAddBudget(false);
     fetchBudgets();
   } catch (error) {
     console.error("Error adding budget:", error);
-    alert("An error occurred while adding the budget.");
+    toastMessage("An error occurred while adding the budget.", "error");
   }
 }
 
@@ -173,13 +175,13 @@ const AllowancePage = () => {
     try {
       const budgetDocRef = doc(db, "allowances", budgetId);
       await deleteDoc(budgetDocRef);
-      alert("Budget deleted successfully!");
+      toastMessage("Budget deleted successfully!", "success");
   
       // Refresh the budgets list
       fetchBudgets();
     } catch (error) {
       console.error("Error deleting budget:", error);
-      alert("An error occurred while deleting the budget.");
+      toastMessage("An error occurred while deleting the budget.", "error");
     }
   }
 
@@ -286,7 +288,7 @@ const AllowancePage = () => {
 
   async function handleAddSaving() {
     if (!savingForm.name || !savingForm.amount || !savingForm.startDate || !savingForm.endDate) {
-      alert("Please fill out all fields.");
+      toastMessage("Please fill out all fields.", "warning");
       return;
     }
   
@@ -339,12 +341,12 @@ const AllowancePage = () => {
         await updateDoc(accountDocRef, { categoryBreakdown });
       }
   
-      alert("Saving added successfully!");
+      toastMessage("Saving added successfully!", "success");
       setAddSaving(false);
       fetchSavings();
     } catch (error) {
       console.error("Error adding saving:", error);
-      alert("An error occurred while adding the saving.");
+      toastMessage("An error occurred while adding the saving.", "error");
     }
   }
 
@@ -393,12 +395,12 @@ const AllowancePage = () => {
     try {
       const savingDocRef = doc(db, "allowances", savingId); 
       await deleteDoc(savingDocRef); 
-      alert("Saving deleted successfully!");
+      toastMessage("Saving deleted successfully!", "success");
   
       fetchSavings();
     } catch (error) {
       console.error("Error deleting saving:", error);
-      alert("An error occurred while deleting the saving.");
+      toastMessage("An error occurred while deleting the saving.", "error");
     }
   }
 

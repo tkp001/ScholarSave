@@ -1,53 +1,91 @@
 import React from 'react';
+import '../App.css';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
 import { useState, useContext } from 'react';
 import UserContext from '../UserContext';
 import { SiSemanticscholar } from "react-icons/si";
+import { toast } from 'react-toastify';
 
 const AuthPage = () => {
   const auth = getAuth();
   const { user, setUser } = useContext(UserContext);
+  const {toastMessage} = useContext(UserContext);
   const provider = new GoogleAuthProvider();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [authErrorMessage, setAuthErrorMessage] = useState(null);
 
   function authSignout() {
     signOut(auth).then(() => {
       console.log("Signed out successfully");
     }).catch((error) => {
       console.error("Error signing out:", error);
+      toastMessage("Error signing out!", "error");
     });
   }
 
   function authSignupPassword() {
+    setAuthErrorMessage(null);
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         console.log(userCredential.user);
       })
       .catch((error) => {
         console.error(error.code, error.message);
+        setAuthMessage(error.code, error.message);
       });
   }
 
   function authSigninPassword() {
+    setAuthErrorMessage(null);
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         console.log(userCredential.user);
       })
       .catch((error) => {
         console.error(error.code, error.message);
+        setAuthMessage(error.code, error.message);
       });
   }
 
   function authGoogleSigninPopup() {
+    setAuthErrorMessage(null);
     signInWithPopup(auth, provider)
       .then((result) => {
         console.log(result.user);
       })
       .catch((error) => {
         console.error(error.code, error.message);
+        setAuthMessage(error.code, error.message);
       });
+  }
+
+  function setAuthMessage(code, message) {
+    switch (code) {
+      case 'auth/invalid-email':
+        setAuthErrorMessage("Invalid email address.");
+        toastMessage("Invalid email address.", "error");
+        break;
+      case 'auth/missing-password':
+        setAuthErrorMessage("Password is required.");
+        toastMessage("Password is required.", "error");
+        break;
+      case 'auth/missing-email':
+        setAuthErrorMessage("Email is required.");
+        toastMessage("Email is required.", "error");
+        break;
+      case 'auth/weak-password':
+        setAuthErrorMessage("Password should be at least 6 characters.");
+        toastMessage("Password should be at least 6 characters.", "error");
+        break;
+      case 'auth/invalid-credential':
+        setAuthErrorMessage("Invalid credentials.");
+        toastMessage("Invalid credentials.", "error");
+        break;
+      default:
+        setAuthErrorMessage(message);
+    }
   }
 
   return (
@@ -95,13 +133,20 @@ const AuthPage = () => {
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 <div>
+                  {authErrorMessage && (
+                    <div className='text-red-500 stagger-container'>{authErrorMessage}</div>
+                  )}
+                </div>
+                <div>
                   <button
                     className="m-1 px-3 rounded-xl bg-gray-500 scale-on-hover"
+                    onClick={authSignupPassword}
                   >
                     Register
                   </button>
                   <button
                     className="m-1 px-3 rounded-xl bg-gray-500 scale-on-hover"
+                    onClick={authSigninPassword}
                   >
                     Log In
                   </button>

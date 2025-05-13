@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import '../App.css';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend } from 'chart.js';
+import UserContext from '../UserContext';
 
 const ToolsPage = () => {
   const [isContentVisible, setIsContentVisible] = useState([false, false, false]);
@@ -70,6 +71,7 @@ const ToolsPage = () => {
 
 
 const InterestPredictionsTool = () => {
+  const {toastMessage} = useContext(UserContext);
   const [principal, setPrincipal] = useState('');
   const [rate, setRate] = useState('');
   const [time, setTime] = useState('');
@@ -84,7 +86,7 @@ const InterestPredictionsTool = () => {
     const timePeriod = parseFloat(time);
 
     if (!principalAmount || !interestRate || !timePeriod) {
-      alert('Please enter valid values for all fields.');
+      toastMessage('Please enter valid values for all fields.', 'warning');
       return;
     }
 
@@ -199,7 +201,7 @@ const InterestPredictionsTool = () => {
         )}
 
         <button
-          className='w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5'
+          className='w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 scale-on-hover'
           onClick={calculateInterest}
         >
           Calculate {calculationType === 'linear' ? 'Simple Interest' : 'Compound Interest'}
@@ -228,6 +230,7 @@ const InterestPredictionsTool = () => {
 };
 
 const CurrencyExchangeTool = () => {
+  const {toastMessage} = useContext(UserContext);
   const [amount, setAmount] = useState('');
   const [fromCurrency, setFromCurrency] = useState('CAD'); // Default
   const [toCurrency, setToCurrency] = useState('USD'); // Default
@@ -251,11 +254,11 @@ const CurrencyExchangeTool = () => {
         const converted = parseFloat(amount) * rate;
         setConvertedAmount(converted.toFixed(2));
       } else {
-        alert('Failed to fetch exchange rates. Please try again.');
+        toastMessage('Error fetching exchange rate', 'error');
       }
     } catch (error) {
       console.error('Error fetching exchange rate:', error);
-      alert('An error occurred while fetching exchange rates.');
+      toastMessage('Error fetching exchange rate', 'error');
     }
   };
 
@@ -295,7 +298,7 @@ const CurrencyExchangeTool = () => {
 
         </select>
         <button
-          className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5"
+          className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 scale-on-hover"
           onClick={fetchExchangeRate}
         >
           Convert
@@ -313,6 +316,7 @@ const CurrencyExchangeTool = () => {
 };
 
 const RepaymentStrategies = () => {
+  const {toastMessage} = useContext(UserContext);
   const [debtAmount, setDebtAmount] = useState('');
   const [interestRate, setInterestRate] = useState('');
   const [repaymentInterval, setRepaymentInterval] = useState('monthly');
@@ -325,7 +329,7 @@ const RepaymentStrategies = () => {
     const durationInMonths = parseInt(repaymentDuration);
 
     if (!principal || !annualRate || !durationInMonths) {
-      alert('Please enter valid values for all fields.');
+      toastMessage('Please enter valid values for all fields.', 'warning');
       return;
     }
 
@@ -385,7 +389,7 @@ const RepaymentStrategies = () => {
           onChange={(e) => setRepaymentDuration(e.target.value)}
         />
         <button
-          className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5"
+          className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 scale-on-hover"
           onClick={calculateRepaymentPlan}
         >
           Calculate Plan

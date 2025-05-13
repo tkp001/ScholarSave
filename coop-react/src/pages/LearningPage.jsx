@@ -1,14 +1,17 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useContext } from 'react'
 import '../App.css';
 import { GoogleGenAI } from "@google/genai";
 import { marked } from "marked";
 import ReactMarkdown from 'react-markdown';
 import { useState } from 'react';
-
+import { PulseLoader } from 'react-spinners';
+import UserContext from '../UserContext';
+import { toast } from 'react-toastify';
 
 const LearningPage = () => {
 const api = import.meta.env.VITE_API_GOOGLE_GENAI
 const ai = new GoogleGenAI({ apiKey: api });
+const {toastMessage} = useContext(UserContext);
 const [question, setQuestion] = useState(null);
 const [chatQuestion, setChatQuestion] = useState(null);
 const [topic, setTopic] = useState(null);
@@ -30,7 +33,7 @@ async function askQuestion(q) {
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash",
       temperature: 0.2,
-      contents: "DO NOT ANSWER ANY QUESTIONS  UNRELATED TO FINANCE. Question:" + q + " : provide a detailed answer, but not too long and directly answer the question. Also provide a large title with different heading, categorize info under sections and draw a image using text. Provide main website links for more information. Add a disclaimer.",
+      contents: "DO NOT ANSWER ANY QUESTIONS UNRELATED TO FINANCE. Question:" + q + " : provide a detailed answer (as if explained to a unknowledged person) based on the question, but not too long and directly answer the question. Provide a large title with different heading, categorize info under sections. Add a disclaimer at the end.",
     });
     console.log(response.text);
     setResponse(response.text);
@@ -43,7 +46,7 @@ async function askQuestion(q) {
 
 async function askChat(chatQuestion) {
   if (!chatQuestion) {
-    alert("Please enter a follow-up question.");
+    toastMessage("Please enter a question", "warning");
     return;
   }
 
@@ -60,7 +63,7 @@ async function askChat(chatQuestion) {
     
   } catch (error) {
     console.error("Error in askChat:", error);
-    alert("An error occurred while processing your chat question.");
+    toastMessage("Error fetching chat response", "error");
   } finally {
     setChatResponseLoading(false);
   }
@@ -153,44 +156,49 @@ return (
 
           {(responseLoading || response) && (
             <div className='flex flex-row h-150 mb-10 fade-in'>
-              <div className='flex-nowrap overflow-auto no-scrollbar bg-gray-700 rounded-l-2xl p-4 mb-10 w-auto min-w-50 max-w-200 h-full'>
+              <div className='flex-nowrap overflow-auto no-scrollbar bg-gray-700 rounded-l-2xl p-4 mb-10 w-full h-full min-w-50 max-w-200'>
               
-              {responseLoading ? (
-                  <div className='text-2xl fade-in'>Loading...</div>
-                ) : (
-                  <>
-                    {response && (
-                      <>
-                        {/* <div
-                          className="markdown-body prose prose-lg max-w-250"
-                          dangerouslySetInnerHTML={{ __html: formattedResponse }}
-                        /> */}
-                        <div className="prose prose-lg prose-invert max-w-none stagger-container">
-                          <ReactMarkdown>{response}</ReactMarkdown>
-                        </div>
-                      </>
-                    )}
-                  </>
-                )}
+                <>
+                  {!responseLoading && response && (
+                    <>
+                      {/* <div
+                      className="markdown-body prose prose-lg max-w-250"
+                      dangerouslySetInnerHTML={{ __html: formattedResponse }}
+                      /> */}
+                      <div className="prose prose-lg prose-invert max-w-none stagger-container">
+                        <ReactMarkdown>{response}</ReactMarkdown>
+                      </div>
+                    </>
+                  )}
+                  
+                  <PulseLoader 
+                    className='my-2 fade-in'
+                    color="white"
+                    loading={responseLoading}
+                    size={15}
+                  />
+                </>
+      
               </div>
               <div className='flex flex-col w-80 min-w-80 h-full bg-gray-700 rounded-r-2xl'>
                 <div className='flex justify-center items-center h-20'>
                   <p className='text-xl'>Chat</p>
                 </div>
                 <div className='flex-nowrap overflow-auto no-scrollbar bg-gray-600 p-3 h-full'>
-                  {chatResponseLoading ? (
-                    <div>
-                      <div className='text-2xl fade-in'>Loading...</div>
-                    </div>
-                  ) : (
-                    <>
-                      {response && (
-                        <div className='stagger-container'>
-                          <ReactMarkdown>{chatResponse}</ReactMarkdown>
-                        </div>
-                      )}
-                    </>
-                  )}
+                  <>
+                    {!chatResponseLoading && response && (
+                      <div className='stagger-container'>
+                        <ReactMarkdown>{chatResponse}</ReactMarkdown>
+                      </div>
+                    )}
+                    <PulseLoader 
+                      className='my-2 fade-in'
+                      color="white"
+                      loading={chatResponseLoading}
+                      size={15}
+                    />
+                  </>
+
                 </div>
                 <div className='flex flex-row justify-center items-center h-30'>
                   <input
@@ -221,7 +229,12 @@ return (
               <button className='bg-gray-600 rounded-3xl w-20 h-8 ml-3 scale-on-hover' onClick={() => fetchSuggestedTopics(topic)}>Generate</button>
             </div>
 
-            {topicsLoading && (<div className='text-2xl'>Loading...</div>)}
+            <PulseLoader 
+              className='my-2 fade-in'
+              color="white"
+              loading={topicsLoading}
+              size={15}
+            />
             {!topicsLoading && suggestedTopics.length == 0 && (<button className='bg-gray-600 rounded-3xl w-40 h-8' onClick={() => fetchSuggestedTopics()}>Fetch Topics</button>)}
             {!topicsLoading && suggestedTopics.map((topic, index) => (
               <div>

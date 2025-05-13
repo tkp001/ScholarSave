@@ -5,6 +5,7 @@ import { useState, useContext } from 'react';
 import UserContext from './UserContext';
 import { db } from './firebaseConfig';
 import { collection, getDocs, query, where } from 'firebase/firestore';
+import { ToastContainer, toast } from 'react-toastify';
 
 import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/HomePage';
@@ -81,6 +82,7 @@ function App() {
       })
       .catch((error) => {
         console.error("Error fetching accounts: ", error);
+        toastMessage("Error fetching accounts", "error");
       });
   }
   
@@ -96,6 +98,54 @@ function App() {
     setAccounts(newAccounts)
   }
 
+  function toastMessage(message, type) {
+      if (type === "error") {
+        toast.error(message, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: false,
+          progress: undefined,
+          theme: "colored",
+        });
+      } else if (type === "success") {
+        toast.success(message, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: false,
+          progress: undefined,
+          theme: "colored",
+  
+        });
+      } else if (type === "warning") {
+        toast.warn(message, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: false,
+          progress: undefined,
+          theme: "colored",
+        });
+      } else {
+        toast(message, {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: false,
+          progress: undefined,
+          theme: "colored",
+        });
+      }
+  }
 
   const router = createBrowserRouter(
     createRoutesFromElements(
@@ -114,7 +164,8 @@ function App() {
   );
 
   return (
-    <UserContext.Provider value={{ user, updateUser, viewedAccount, updateViewedAccount, accounts, updateAccounts, fetchAccounts }}>
+    <UserContext.Provider value={{ user, updateUser, viewedAccount, updateViewedAccount, accounts, updateAccounts, fetchAccounts, toastMessage }}>
+      <ToastContainer />
       <RouterProvider router={router} />
     </UserContext.Provider>
   )

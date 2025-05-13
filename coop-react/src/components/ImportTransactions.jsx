@@ -4,6 +4,7 @@ import { useDropzone } from "react-dropzone";
 import csv from "csvtojson";
 import { GoogleGenAI } from "@google/genai";
 import { Timestamp } from "firebase/firestore"; // Import Timestamp from Firestore
+import { PulseLoader } from "react-spinners";
 
 const ImportTransactions = ({importCorrectedTransactions}) => {
   const [parsedData, setParsedData] = useState([]); // State to store parsed CSV data
@@ -114,6 +115,7 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
       
       <div
         {...getRootProps()}
+        className="my-2"
         style={{
           border: "2px dashed #ccc",
           padding: "20px",
@@ -131,8 +133,8 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
 
       {parsedData.length > 0 && (
         <>
-          <h3 className="text-lg my-2 bg-gray-500 rounded-xl p-1">Parsed Data:</h3>
-          <div className="mt-4 max-h-50 overflow-auto">
+          <h3 className="text-lg my-2 bg-green-500 rounded-xl p-1">Provided Data:</h3>
+          <div className="mt-4 max-h-20 overflow-auto">
             <ul>
               {parsedData.map((row, index) => (
                 <li key={index}>
@@ -141,54 +143,60 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
               ))}
             </ul>
           </div>
+
+
+          {!response && parsedData.length > 0 ? (
+            <div className="text-lg my-2 bg-yellow-500 rounded-xl p-1">Correcting Data..</div>
+          ) : (
+            <div className="text-lg my-2 bg-green-500 rounded-xl p-1">AI Corrected Data</div>
+          )}
+          {response && (
+            <div className="mt-4 max-h-50 overflow-auto">
+              <ul>
+                {(() => {
+                  try {
+                    return responseData.data.map((transaction, index) => (
+                      <li key={index}>
+                        <strong>Name:</strong> {transaction.name}, <strong>Date:</strong> {transaction.date}, <strong>Category:</strong> {transaction.category}, <strong>Amount:</strong> {transaction.amount}
+                      </li>
+                    ));
+                  } catch (error) {
+                    console.error("Error parsing AI response:", error);
+                    return <li>Error displaying AI response.</li>;
+                  }
+                })()}
+              </ul>
+            </div>
+          )}
+          <PulseLoader
+            className="my-2"
+            color="white"
+            loading={!response && parsedData.length > 0}
+            size={15}
+            aria-label="Loading Spinner"
+            data-testid="loader"
+          />
+
+          {response ? 
+            <div className="text-lg my-2 bg-green-500 rounded-xl p-1">Transaction Preview</div>
+          :
+            <div className="text-lg my-2 bg-yellow-500 rounded-xl p-1">Transaction Preview</div>
+          }
+          <PulseLoader
+            className="my-2"
+            color="white"
+            loading={!response}
+            size={15}
+            aria-label="Loading Spinner"
+            data-testid="loader"
+          />
+
         </>  
       )}
       
-      {!response && parsedData.length > 0 && (
-        <div className="text-lg my-2 bg-yellow-500 rounded-xl p-1">Correcting Data..</div>
-      )}
-
+      
       {response && (
         <>
-          <div className="text-lg my-2 bg-gray-500 rounded-xl p-1">AI Corrected Data</div>
-          {/* <div className="mt-4 max-h-50 overflow-auto">
-            <ul>
-              {response.map((transaction, index) => (
-                <li key={index}>
-                  <strong>Name:</strong> {transaction.name}, 
-                  <strong>Date:</strong> {transaction.date}, 
-                  <strong>Category:</strong> {transaction.category}, 
-                  <strong>Amount:</strong> {transaction.amount}, 
-                  <strong>Full Date:</strong> {transaction.fullDate}
-                </li>
-              ))}
-            </ul>
-          </div> */}
-        </>
-      )}
-
-      {response && (
-        <div className="mt-4 max-h-50 overflow-auto">
-          <ul>
-            {(() => {
-              try {
-                return responseData.data.map((transaction, index) => (
-                  <li key={index}>
-                    <strong>Name:</strong> {transaction.name}, <strong>Date:</strong> {transaction.date}, <strong>Category:</strong> {transaction.category}, <strong>Amount:</strong> {transaction.amount}
-                  </li>
-                ));
-              } catch (error) {
-                console.error("Error parsing AI response:", error);
-                return <li>Error displaying AI response.</li>;
-              }
-            })()}
-          </ul>
-        </div>
-      )}
-
-      {response && (
-        <>
-          <div className="text-lg my-2 bg-green-500 rounded-xl p-1">Transaction Preview</div>
           <div className="flex flex-row p-1">
             <div className="w-100">Name</div>
             <div className="w-40">Date</div>
@@ -210,7 +218,8 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
             </div>
           </div>
           <div>
-            <button className="bg-green-600 rounded-3xl w-20 h-8 my-3 scale-on-hover" onClick={acceptTransactions}>Accept</button>
+            <div className="text-md mx-1 mt-4">Check if transactions are right before importing.</div>
+            <button className="bg-green-600 rounded-3xl w-auto px-2 h-8 my-3 scale-on-hover" onClick={acceptTransactions}>Accept Transactions</button>
           </div>
         </> 
       )}

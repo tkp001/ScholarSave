@@ -2,23 +2,25 @@ import React, { useContext, useState } from 'react';
 import { getAuth, signOut, updateEmail, sendPasswordResetEmail, updatePassword, sendEmailVerification, deleteUser, updateProfile } from "firebase/auth";
 import { SiSemanticscholar } from "react-icons/si";
 import UserContext from '../UserContext';
+import { toast } from 'react-toastify';
 
 const SettingsPage = () => {
   const auth = getAuth();
   const user = auth.currentUser;
   const [verificationEmailSent, setVerificationEmailSent] = useState(false);
+  const { toastMessage } = useContext(UserContext);
 
   function sendUserEmailVerification() {
     sendEmailVerification(auth.currentUser);
     setVerificationEmailSent(true);
-    alert("Verification email sent to " + user.email);
+    toastMessage("Verification email sent!", "success");
   }
 
   function authSignout() {
     signOut(auth).then(() => {
-      // Sign-out successful.
+      toastMessage("Signed out successfully!", "success");
     }).catch((error) => {
-      // An error happened.
+      toastMessage("Error signing out!", "error");
     });
   }
 
@@ -26,9 +28,9 @@ const SettingsPage = () => {
     const confirmDelete = confirm("Are you sure you want to delete your account? This action cannot be undone.");
     if (confirmDelete) {
       deleteUser(user).then(() => {
-        alert("User deleted. Thank you for using our service!");
+        toastMessage("Account deleted successfully!", "success");
       }).catch((error) => {
-        // An error occurred
+        toastMessage("Error deleting account!", "error");
       });
     }
   }
@@ -38,9 +40,9 @@ const SettingsPage = () => {
     const confirmChange = confirm(`Are you sure you want to change your email to ${newEmail}?`);
     if (newEmail && confirmChange) {
       updateEmail(auth.currentUser, newEmail).then(() => {
-        alert("Email updated!");
+        toastMessage("Email updated successfully!", "success");
       }).catch((error) => {
-        // An error occurred
+        toastMessage("Error updating email!", "error");
       });
     }
   }
@@ -50,19 +52,19 @@ const SettingsPage = () => {
     if (confirmChange) {
       sendPasswordResetEmail(auth, user.email)
         .then(() => {
-          alert("A password reset email will be sent to " + user.email);
+          toastMessage("Password reset email sent!", "success");
         })
         .catch((error) => {
-          // Handle error
+          toastMessage("Error sending password reset email!", "error");
         });
     } else {
       const newPassword = prompt("Enter your new password:");
       const confirmChange = confirm(`Is ${newPassword} ok?`);
       if (newPassword && confirmChange) {
         updatePassword(user, newPassword).then(() => {
-          alert("Password updated!");
+          toastMessage("Password updated successfully!", "success");
         }).catch((error) => {
-          // Handle error
+          toastMessage("Error updating password!", "error");
         });
       }
     }
@@ -75,9 +77,9 @@ const SettingsPage = () => {
       updateProfile(auth.currentUser, {
         displayName: name,
       }).then(() => {
-        alert("Name updated!");
+        toastMessage("Name updated successfully!", "success");
       }).catch((error) => {
-        // Handle error
+        toastMessage("Error updating name!", "error");
       });
     }
   }

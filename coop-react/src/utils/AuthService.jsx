@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import UserContext from '../UserContext'
 
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
+import { PulseLoader } from 'react-spinners';
 
 
 const AuthService = ({children}) => {
@@ -17,8 +18,10 @@ const AuthService = ({children}) => {
     const { user, updateUser } = useContext(UserContext);
     const [loading, setLoading] = useState(true);
 
+    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
     useEffect(() => {
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
           if (user) {
             // User is signed in, see docs for a list of available properties
             // https://firebase.google.com/docs/reference/js/auth.user
@@ -33,14 +36,22 @@ const AuthService = ({children}) => {
             updateUser(null)
             // ...
           }
+          await delay(500);
           setLoading(false);
         });
       }, [auth, updateUser, loading]);
     
     if (loading) {
       return <div className='flex bg-black text-white w-screen h-screen justify-center items-center'>
-        <div className="py-2 animate-float">
-          <SiSemanticscholar size={300} />
+        <div className="py-2">
+          <SiSemanticscholar className="animate-float" size={300} />
+          <div className='flex justify-center items-center'>
+            <PulseLoader 
+              color="white"
+              loading={loading}
+              size={20}
+            />
+          </div>
         </div>
       </div>;
     }

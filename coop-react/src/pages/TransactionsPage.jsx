@@ -7,6 +7,7 @@ import { useContext } from 'react';
 import TransactionList from '../components/TransactionList';
 import AccountViewer from '../components/AccountViewer';
 import ImportTransactions from '../components/ImportTransactions';
+import { toast } from 'react-toastify';
 
 
 const TransactionsPage = () => {
@@ -15,6 +16,7 @@ const TransactionsPage = () => {
   const {accounts} = useContext(UserContext);
   const {updateViewedAccount} = useContext(UserContext);
   const {fetchAccounts} = useContext(UserContext);
+  const {toastMessage} = useContext(UserContext);
   const [animateKey, setAnimateKey] = useState(0); 
   // Transactions
 
@@ -138,6 +140,7 @@ const TransactionsPage = () => {
       setTransactions(transactionsData);
     } catch (error) {
       console.error("Error fetching transactions:", error);
+      toastMessage("Error fetching transactions", "error");
     }
   }
 
@@ -254,15 +257,15 @@ const TransactionsPage = () => {
   
     // Validate inputs
     if (!sourceAccount || !destinationAccount || !amount || !date) {
-      alert("Please fill out all fields.");
+      toastMessage("All fields are required. Please fill out the form completely.", "warning");
       return;
     }
     if (sourceAccount === destinationAccount) {
-      alert("Source and destination accounts cannot be the same.");
+      toastMessage("Source and destination accounts cannot be the same.", "warning");
       return;
     }
     if (isNaN(amount) || parseFloat(amount) <= 0) {
-      alert("Please enter a valid amount greater than zero.");
+      toastMessage("Amount must be a positive number.", "warning");
       return;
     }
   
@@ -277,7 +280,7 @@ const TransactionsPage = () => {
       ]);
   
       if (!sourceSnapshot.exists() || !destinationSnapshot.exists()) {
-        alert("One or both accounts do not exist.");
+        toastMessage("One or both accounts do not exist.", "error");
         return;
       }
   
@@ -333,12 +336,12 @@ const TransactionsPage = () => {
         changeAccountBalance(amount, destinationAccountRef.id, destinationTransaction.id),
       ]);
   
-      alert("Money transferred successfully!");
+      toastMessage("Transfer successful!", "success");
       resetTransferForm();
       setTransferMoney(false);
     } catch (error) {
       console.error("Error transferring money:", error);
-      alert("An error occurred while transferring money.");
+      toastMessage("Error transferring money", "error");
     }
   }
 
@@ -347,7 +350,7 @@ const TransactionsPage = () => {
   
     // Validate inputs
     if (!name || !category || !date || !amount) {
-      alert("All fields are required. Please fill out the form completely.");
+      toastMessage("All fields are required. Please fill out the form completely.", "warning");
       return;
     }
   
@@ -371,10 +374,10 @@ const TransactionsPage = () => {
   
       resetTransactionForm();
       setAddTransaction(false);
-      alert("Transaction added successfully!");
+      toastMessage("Transaction added successfully!", "success");
     } catch (error) {
       console.error("Error adding transaction:", error);
-      alert("An error occurred while adding the transaction.");
+      toastMessage("Error adding transaction", "error");
     }
   }
 
@@ -388,7 +391,7 @@ const TransactionsPage = () => {
       const transactionSnapshot = await getDoc(transactionDocRef);
   
       if (!transactionSnapshot.exists()) {
-        alert("Transaction does not exist.");
+        toastMessage("Transaction does not exist.", "error");
         return;
       }
   
@@ -408,11 +411,11 @@ const TransactionsPage = () => {
         changeAccountBalance(reversedAmount, viewedAccount.id), // Reverse the amount in the account balance
       ]);
   
-      alert("Transaction deleted successfully!");
+      toastMessage("Transaction deleted successfully!", "success");
       fetchTransactions(); // Refresh the transactions list
     } catch (error) {
       console.error("Error deleting transaction:", error);
-      alert("An error occurred while deleting the transaction.");
+      toastMessage("Error deleting transaction", "error");
     }
   }
 
@@ -501,7 +504,7 @@ const TransactionsPage = () => {
     const transactionArray = transactionData?.data || transactionData;
   
     if (!Array.isArray(transactionArray) || transactionArray.length === 0) {
-      alert("No transactions to import or invalid data format.");
+      toastMessage("No transactions to import or invalid data format.", "warning");
       return;
     }
   
@@ -560,12 +563,12 @@ const TransactionsPage = () => {
         });
       }
 
-      alert("Transactions imported and account data recalculated successfully!");
+      toastMessage("Transactions imported successfully!", "success");
       fetchAccounts();
       fetchTransactions();
     } catch (error) {
       console.error("Error importing transactions:", error);
-      alert("An error occurred while importing transactions.");
+      toastMessage("Error importing transactions", "error");
     }
   }
 
@@ -756,13 +759,13 @@ const TransactionsPage = () => {
                   <p className="text-md my-2">You are performing "{transactionForm.type}"</p>
 
                   <button
-                    className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 mr-3"
+                    className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 mr-3 scale-on-hover"
                     onClick={handleAddTransaction}
                   >
                     Save Transaction
                   </button>
                   <button
-                    className="w-fit h-8 bg-red-600 rounded-4xl px-2 my-5"
+                    className="w-fit h-8 bg-red-600 rounded-4xl px-2 my-5 scale-on-hover"
                     onClick={resetTransactionForm}
                   >
                     Cancel
@@ -832,14 +835,14 @@ const TransactionsPage = () => {
                 />
                 
                 <button
-                  className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 mr-3"
+                  className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 mr-3 scale-on-hover"
                   onClick={handleTransferMoney}
                 >
                   Transfer Money
                 </button>
 
                 <button
-                    className="w-fit h-8 bg-red-600 rounded-4xl px-2 my-5"
+                    className="w-fit h-8 bg-red-600 rounded-4xl px-2 my-5 scale-on-hover"
                     onClick={resetTransferForm}
                   >
                     Cancel
