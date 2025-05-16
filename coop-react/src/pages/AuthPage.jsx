@@ -5,6 +5,7 @@ import { useState, useContext } from 'react';
 import UserContext from '../UserContext';
 import { SiSemanticscholar } from "react-icons/si";
 import { toast } from 'react-toastify';
+import { PulseLoader } from 'react-spinners';
 
 const AuthPage = () => {
   const auth = getAuth();
@@ -117,16 +118,16 @@ const AuthPage = () => {
           {!user ? (
             <>
               {/* Input Fields */}
-              <div className="flex flex-col items-center stagger-container">
+              <div className="flex flex-col items-center">
                 <input
-                  className="border-2 border-gray-500 rounded-xl m-1 p-1"
+                  className="border-2 border-gray-500 rounded-xl m-1 p-1 scale-on-hover"
                   type="email"
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
                 <input
-                  className="border-2 border-gray-500 rounded-xl m-1 p-1"
+                  className="border-2 border-gray-500 rounded-xl m-1 p-1 scale-on-hover"
                   type="password"
                   placeholder="Password"
                   value={password}
@@ -151,6 +152,12 @@ const AuthPage = () => {
                     Log In
                   </button>
                 </div>
+                <PulseLoader 
+                  className='my-4'
+                  color="white"
+                  loading={user}
+                  size={15}
+                />
               </div>
 
               {/* OR Divider */}

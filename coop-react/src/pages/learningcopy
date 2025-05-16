@@ -23,66 +23,26 @@ const [topicsLoading, setTopicsLoading] = useState(false);
 const [formattedResponse, setFormattedResponse] = useState(null);
 
 const [suggestedTopics, setSuggestedTopics] = useState([]);
-const [selectedSection, setSelectedSection] = useState('main');
+
 
 async function askQuestion(q) {
   if (q) {
     setResponseLoading(true);
-    setSelectedSection('main');
     setChatResponse(null);
     setChatQuestion("");
-    try {
-      const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
-        temperature: 0.2,
-        contents: `
-        DO NOT ANSWER ANY QUESTIONS UNRELATED TO FINANCE.
-        Question: ${q}
-        Respond ONLY in JSON format with the following structure:
-        {
-          "main": "A detailed answer to the question, explained simply.",
-          "definitions": "A list or paragraph of key definitions relevant to the question.",
-          "summary": "A short summary of the main answer.",
-          "links_resources": ["A list of 5-10 reputable links or resources for further reading."]
-          "examples": ["A list of 5-10 examples relevant to the question."],
-          "related_topics": ["A list of 5-10 related topics for further exploration."],
-          "case_studies": ["A list of 5-10 case studies or real-world examples that illustrate the topic."],
-          "applications": ["A list of 5-10 practical applications or uses of the topic in real life."],
-          "future_outlook": ["A list of 5-10 current trends or developments/predictions related to the topic.],
-        }
-        Do not include any text outside the JSON object. Name of JSON is response.
-        Use github markdown.
-        `,
-      });
-      // Try to extract and parse JSON from the response
-      let cleaned = response.text.trim();
-      const jsonStart = cleaned.indexOf("{");
-      const jsonEnd = cleaned.lastIndexOf("}");
-      if (jsonStart !== -1 && jsonEnd !== -1) {
-        cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
-      }
-      const parsed = JSON.parse(cleaned);
-      console.log("Parsed Response:", parsed);
-      setResponse(parsed);
-    } catch (err) {
-      console.error("Error parsing response:", err);
-      toastMessage("Error parsing response. Please try again.", "error");
-    }
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      temperature: 0.2,
+      contents: "DO NOT ANSWER ANY QUESTIONS UNRELATED TO FINANCE. Question:" + q + " : provide a detailed answer (as if explained to a unknowledged person) based on the question, but not too long and directly answer the question. Provide a large title with different heading, categorize info under sections. Add a disclaimer at the end.",
+    });
+    console.log(response.text);
+    setResponse(response.text);
+    
+    const markedFormat = formatMarkdown(response.text);
+    setFormattedResponse(markedFormat);
     setResponseLoading(false);
   }
 }
-
-const sectionLabels = {
-  main: "Main",
-  definitions: "Definitions",
-  summary: "Summary",
-  links_resources: "Links & Resources",
-  examples: "Examples",
-  related_topics: "Related Topics",
-  case_studies: "Case Studies",
-  applications: "Applications",
-  future_outlook: "Future Outlook"
-};
 
 async function askChat(chatQuestion) {
   if (!chatQuestion) {
@@ -95,7 +55,7 @@ async function askChat(chatQuestion) {
   try {
     const chatResponse = await ai.models.generateContent({
       model: "gemini-2.0-flash",
-      contents: `DO NOT ANSWER ANY QUESTIONS UNRELATED TO FINANCE. Based on the following response: "${JSON.stringify(response)}", answer the follow-up question: "${chatQuestion}". Provide a clear answer.`,
+      contents: `DO NOT ANSWER ANY QUESTIONS UNRELATED TO FINANCE. Based on the following response: "${response}", answer the follow-up question: "${chatQuestion}". Provide a clear answer.`,
     });
 
     console.log("Chat Response:", chatResponse.text);
@@ -180,7 +140,7 @@ function askSuggestedQuestion(q) {
 
 return (
     <div className='flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white stagger-container'>
-        <div className="flex flex-col items-center w-full h-full p-10">
+        <div className="flex flex-col items-center w-full h-100 p-10">
           <div className='text-5xl'>Learn About Finance</div>
           <div className='flex flex-row justify-around items-center '>
             <input
@@ -190,52 +150,25 @@ return (
               value={question}
               placeholder="Ask a Question"
               onChange={(e) => setQuestion(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') askQuestion(question); }}
             />
             <button className='bg-gray-600 rounded-3xl w-20 h-8 ml-3 scale-on-hover' onClick={() => askQuestion(question)}>Ask</button>
           </div>
-          <div className='italic text-sm font-bold my-2'>Disclaimer: AI is not a financial advisor.</div>
 
           {(responseLoading || response) && (
-            <div className='flex flex-row w-5/6 min-w-5/6 min-h-5/6 mb-10 fade-in'>
-              <div className="flex flex-col bg-gray-700 rounded-2xl p-4 mr-2 min-w-40">
-                {!responseLoading && response && (
-                  <div className="flex flex-col flex-grow p-1 overflow-auto ">
-                    {/* Dynamic render options to select */}
-                    {Object.keys(response).map((key) => (
-                      <button
-                        key={key}
-                        className={`mb-2 p-2 rounded scale-on-hover ${selectedSection === key ? 'bg-blue-600 text-white' : 'bg-gray-600 text-gray-200'}`}
-                        onClick={() => setSelectedSection(key)}
-                      >
-                        {sectionLabels[key] || key}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+            <div className='flex flex-row h-150 mb-10 fade-in'>
+              <div className='flex-nowrap overflow-auto no-scrollbar bg-gray-700 rounded-l-2xl p-4 mb-10 w-full h-full min-w-50 max-w-200'>
               
-              <div className='flex-nowrap overflow-auto no-scrollbar bg-gray-700 rounded-l-2xl p-4 mb-10 w-full h-full min-w-50'>
                 <>
                   {!responseLoading && response && (
-                    <div
-                      key={selectedSection}
-                      className="prose prose-lg prose-invert max-w-none fade-in"
-                    >
-                      {selectedSection && response[selectedSection] && (
-                        Array.isArray(response[selectedSection]) ? (
-                          <ul>
-                            {response[selectedSection].map((item, idx) => (
-                              <li key={idx}>
-                                <ReactMarkdown>{item}</ReactMarkdown>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <ReactMarkdown>{response[selectedSection]}</ReactMarkdown>
-                        )
-                      )}
-                    </div>
+                    <>
+                      {/* <div
+                      className="markdown-body prose prose-lg max-w-250"
+                      dangerouslySetInnerHTML={{ __html: formattedResponse }}
+                      /> */}
+                      <div className="prose prose-lg prose-invert max-w-none stagger-container">
+                        <ReactMarkdown>{response}</ReactMarkdown>
+                      </div>
+                    </>
                   )}
                   
                   <PulseLoader 
@@ -247,7 +180,7 @@ return (
                 </>
       
               </div>
-              <div className='flex flex-col w-75 min-w-75 h-full bg-gray-700 rounded-r-2xl'>
+              <div className='flex flex-col w-80 min-w-80 h-full bg-gray-700 rounded-r-2xl'>
                 <div className='flex justify-center items-center h-20'>
                   <p className='text-xl'>Chat</p>
                 </div>
@@ -275,7 +208,6 @@ return (
                     value={chatQuestion}
                     placeholder="Ask a Question"
                     onChange={(e) => setChatQuestion(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') askChat(chatQuestion); }}
                   />
                   <button className='bg-gray-600 rounded-3xl w-20 h-8 ml-1 scale-on-hover' onClick={() => askChat(chatQuestion)}>Ask</button>
                 </div>
@@ -283,6 +215,7 @@ return (
             </div>
           )}
 
+          <div className='text-3xl mb-5'>Suggested Topics</div>
           <div className='flex flex-col bg-gray-700 w-170 h-auto rounded-3xl mb-5 p-5 stagger-container'>
             <div className='flex flex-row items-center'>
               <input
@@ -292,7 +225,6 @@ return (
                 value={topic}
                 placeholder="Search for a Topic"
                 onChange={(e) => setTopic(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') fetchSuggestedTopics(topic); }}
               />
               <button className='bg-gray-600 rounded-3xl w-20 h-8 ml-3 scale-on-hover' onClick={() => fetchSuggestedTopics(topic)}>Generate</button>
             </div>

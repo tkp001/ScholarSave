@@ -9,6 +9,7 @@ import 'chart.js/auto'; // MUST INCLUDE TO DESTROY UPON UNMOUNTING
 import AccountViewer from '../components/AccountViewer';
 import jsPDF from "jspdf";
 import { PulseLoader } from "react-spinners";
+import ReactMarkdown from 'react-markdown';
 
 // import { Chart } from 'chart.js/auto';
 
@@ -251,7 +252,7 @@ const HomePage = () => {
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash",
       temperature: 0.2,
-      contents: `Provide summarized in 100 words or less insights or suggestions based on the following user data:\n\n${formattedData}\n\n Add a disclamier that you are not a financial advisor.`,
+      contents: `Provide summarized in 100 words or less insights or suggestions based on the following user data:\n\n${formattedData}\n\n`,
     });
   
     // Log the response
@@ -259,6 +260,38 @@ const HomePage = () => {
     setAiInsight(response.text);
   }
   
+  const [aiQuestion, setAiQuestion] = useState('');
+  const [aiAnswer, setAiAnswer] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+
+  async function askAiQuestion() {
+    if (!aiQuestion.trim()) return;
+    setAiLoading(true);
+    setAiAnswer('');
+    try {
+      const userData = getFormattedUserData();
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash",
+        temperature: 0.2,
+        contents: `Only answer finance related questions, User data:\n${userData}\n\nFinance question: ${aiQuestion}\n\nAnswer as if to a beginner. Use 100 words or less`,
+      });
+      setAiAnswer(response.text);
+    } catch (err) {
+      setAiAnswer("Sorry, there was an error getting an answer.");
+    }
+    setAiLoading(false);
+  }
+
+  function getFormattedUserData() {
+    return `
+      Monthly Balance: ${JSON.stringify(monthlyBalance, null, 2)}
+      Top 5 Income: ${JSON.stringify(top5Income, null, 2)}
+      Top 5 Spending: ${JSON.stringify(top5Spending, null, 2)}
+      Monthly Balances: ${JSON.stringify(monthlyBalances, null, 2)}
+      Category Change Data: ${JSON.stringify(categoryChangeData, null, 2)}
+    `;
+  }
+
   useEffect(() => {
     // Check if all required data is available
     setAiInsight(null); // Reset when account changes
@@ -325,12 +358,16 @@ const HomePage = () => {
 
   return (
     <div className="flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white">
-      <div className="flex flex-col w-full h-400 p-10">
+      <div className="flex flex-col w-full p-10">
         <AccountViewer />
 
         <div className="text-3xl my-3 fade-in">
           Welcome {user?.displayName || 'User'}
         </div>
+
+        {!viewedAccount && (
+          <div className="text-xl my-2 mb-5 fade-in">Please select an account to view details.</div>
+        )}
 
         {viewedAccount && (
           <div
@@ -358,7 +395,8 @@ const HomePage = () => {
               </div>
 
               <div className="rounded-3xl flex flex-col bg-gray-700 w-200 h-fit my-2 py-5 p-3 fade-in">
-                <div className="text-xl mb-2">ScholarSave Insights AI</div>
+                <div className="text-xl">ScholarSave Insights AI</div>
+                <div className='italic text-sm font-bold my-2'>Disclaimer: AI is not a financial advisor.</div>
                 {aiInsight && (
                   <div className="fade-in">{aiInsight}</div>
                 )}
@@ -368,7 +406,43 @@ const HomePage = () => {
                   loading={!aiInsight}
                   size={15}
                 />
-              </div>
+
+                {aiInsight && (
+                  <div className="flex flex-row my-3 fade-in">
+                  <input
+                    className="border-2 border-gray-500 rounded-xl p-2 w-full mr-2"
+                    type="text"
+                    placeholder="Ask a finance question..."
+                    value={aiQuestion}
+                    onChange={e => setAiQuestion(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') askAiQuestion(); }}
+                  />
+                  <button
+                    className="bg-blue-500 text-white rounded-xl px-4 py-2 scale-on-hover"
+                    onClick={askAiQuestion}
+                    disabled={aiLoading}
+                  >
+                      Ask
+                  </button>
+                </div>
+                )}
+                {aiLoading && (
+                  <PulseLoader
+                    className='justify-center my-2 fade-in'
+                    color={"white"}
+                    loading={aiLoading}
+                    size={15}
+                  />
+                )}
+                {aiQuestion && aiAnswer && (
+                  <div className="fade-in">
+                    <div className="font-bold">Question:</div>
+                    <div className="mb-2">{aiQuestion}</div>
+                    <div className="font-bold">Answer:</div>
+                    <div><ReactMarkdown>{aiAnswer}</ReactMarkdown></div>
+                  </div>
+                )}
+            </div>
 
             <div className="flex flex-col bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5 fade-in">
               <div className="text-xl mb-2">Monthly Balance</div>

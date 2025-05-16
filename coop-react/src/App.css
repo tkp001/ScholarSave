@@ -71,3 +71,6 @@
   transform: scale(1.05);
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}

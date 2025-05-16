@@ -10,6 +10,7 @@ import { toast } from 'react-toastify';
 const BalancePage = () => {
   const { user } = useContext(UserContext);
   const { viewedAccount } = useContext(UserContext);
+  const { accounts } = useContext(UserContext);
   const { updateViewedAccount } = useContext(UserContext);
   const [lastTransactionDetails, setLastTransactionDetails] = useState(null);
   const { fetchAccounts } = useContext(UserContext);
@@ -25,6 +26,19 @@ const BalancePage = () => {
     last_modified: new Date().toLocaleString(),
     last_transaction: "N/A",
   });
+
+  function resetAccountForm() {
+    setNewAccount(!newAccount)
+    setAccountForm({
+      account_number: "",
+      balance: 0,
+      nickname: "",
+      status: "active",
+      user_id: user.uid,
+      last_modified: new Date().toLocaleString(),
+      last_transaction: "N/A",
+    });
+  }
 
   const [animateKey, setAnimateKey] = useState(0); // State to trigger animation
 
@@ -152,42 +166,56 @@ const BalancePage = () => {
   };
 
   return (
-    <div className="flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white">
-      <div className="flex flex-col w-full h-400 p-10">
+    <div className="flex flex-row flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white">
+      <div className="flex flex-col flex-grow p-10">
         <AccountViewer />
 
-        {viewedAccount ? (
-          <div
-            key={animateKey} // Use the animation key to re-render the div
-            className="flex flex-col stagger-container"
-          >
-            <div className="text-3xl fade-in">Total Balance</div>
-            <div className="text-5xl mb-10 fade-in">${parseFloat(viewedAccount.balance).toFixed(2)}</div>
+        <div className='flex flex-row max-w-200'>
+          {viewedAccount ? (
+            <div
+              key={animateKey} // Use the animation key to re-render the div
+              className="flex flex-col flex-grow stagger-container"
+            >
+              <div className="text-3xl fade-in">Total Balance</div>
+              <div className="text-5xl mb-10 fade-in">${parseFloat(viewedAccount.balance).toFixed(2)}</div>
 
-            <div className="text-3xl fade-in">Last Modified</div>
-            <div className="text-2xl mb-10 fade-in">{viewedAccount.last_modified}</div>
+              <div className="text-3xl fade-in">Last Modified</div>
+              <div className="text-2xl mb-10 fade-in">{viewedAccount.last_modified}</div>
 
-            <div className="text-3xl fade-in">Last Transaction</div>
-            {lastTransactionDetails ? (
-              <>
-                <div className="text-2xl mb-10 fade-in">
-                  <p className="text-sm">ID: {viewedAccount.last_transaction}</p>
-                  <p>Name: {lastTransactionDetails.name}</p>
-                  <p>Amount: ${lastTransactionDetails.amount}</p>
-                  <p>Category: {lastTransactionDetails.category}</p>
-                </div>
-              </>
-            ) : (
-              <div className="text-2xl mb-10 fade-in">No transaction details available.</div>
-            )}
-          </div>
-        ) : (
-          <div className="text-xl my-2 mb-10 fade-in">Please select an account to view details.</div>
-        )}
+              <div className="text-3xl fade-in">Last Transaction</div>
+              {lastTransactionDetails ? (
+                <>
+                  <div className="text-2xl mb-10 fade-in">
+                    <p className="text-sm">ID: {viewedAccount.last_transaction}</p>
+                    <p>Name: {lastTransactionDetails.name}</p>
+                    <p>Amount: ${lastTransactionDetails.amount}</p>
+                    <p>Category: {lastTransactionDetails.category}</p>
+                  </div>
+                </>
+              ) : (
+                <div className="text-2xl mb-10 fade-in">No transaction details available.</div>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-grow text-xl my-2 mb-5 fade-in">Please select an account to view details.</div>
+          )}
+
+          <div className="flex flex-col max-w-100 min-w-60 w-100 p-4 h-full stagger-container">
+          <div className="text-xl mb-4">Accounts</div>
+          {accounts.slice(0, 5).map((acc) => (
+            <div key={acc.id} className="mb-3 p-2 bg-gray-700 rounded-xl">
+              <div className="font-semibold">{acc.nickname}</div>
+              <div className="text-xs text-gray-300">#{acc.account_number}</div>
+              <div className="text-sm">Balance: ${parseFloat(acc.balance).toFixed(2)}</div>
+            </div>
+          ))}
+        </div>
+        
+      </div>
 
         {viewedAccount && (
           <button
-              className="w-fit h-8 bg-red-600 rounded-4xl px-2 my-5 scale-on-hover"
+              className="w-fit min-h-8 h-8 bg-red-600 rounded-4xl px-2 my-5 scale-on-hover"
               onClick={deleteAccount}
             >
               Unlink Account
@@ -196,7 +224,7 @@ const BalancePage = () => {
 
         <button
           className="w-fit min-h-8 h-8 bg-green-600 rounded-4xl px-2 mr-3 scale-on-hover"
-          onClick={() => setNewAccount(!newAccount)}
+          onClick={() => resetAccountForm()}
         >
           + New Account
         </button>

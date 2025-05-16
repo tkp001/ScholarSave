@@ -29,7 +29,7 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
           contents:
             "present the data: " +
             q +
-            " in JSON format, include the headings (Name, Date in YY-MM-DD, Category, Amount), all headings are lowercase. Do not include any additional text outside the JSON object. name of JSON is data",
+            " in JSON format, include the headings (Name, Date in YYYY-MM-DD, Category, Amount), all headings are lowercase. Do not include any additional text outside the JSON object. name of JSON is data",
         });
     
         // Manually clean and format the response
@@ -55,7 +55,8 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
         const transactionsWithFullDate = parsedResponse.data.map((transaction) => {
           const [year, month, day] = transaction.date.split("-").map(Number);
           const fullYear = year < 100 ? 2000 + year : year; // Handle 2-digit year (e.g., 25 -> 2025)
-          const localDate = new Date(fullYear, month - 1, day); // Month is 0-indexed
+          const utcDate = new Date(Date.UTC(fullYear, month - 1, day));
+          const localDate = new Date(utcDate);
             
           const fullDate = Timestamp.fromDate(localDate); 
           
@@ -112,6 +113,7 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
   return (
     <div className="bg-gray-700 my-2 p-3 rounded-3xl stagger-container">
       <div className="text-lg mb-2">Import Transactions</div>
+      <div className='italic text-sm font-bold my-2'>Disclaimer: AI is not a financial advisor. Information may be incorrect.</div>
       
       <div
         {...getRootProps()}
@@ -209,7 +211,7 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
                   <div className="flex flex-row justify-left w-full bg-gray-600 rounded-xl m-1 p-2">
                       <div className='flex flex-row w-full'>
                         <div className="w-100">{transaction.name}</div>
-                        <div className="w-40">{transaction.date}</div>
+                        <div className="w-40 text-xs h-auto">Local: {transaction.fullDate?.toISOString()}, Timestamp: {transaction.fullDate?.toLocaleString()}</div>
                         <div className="w-60">{transaction.category}</div>
                         <div className='w-15'>${transaction.amount}</div>
                       </div>
@@ -218,7 +220,7 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
             </div>
           </div>
           <div>
-            <div className="text-md mx-1 mt-4">Check if transactions are right before importing.</div>
+            <div className="text-md mx-1 mt-4 italic">Check if transactions are correct before importing.</div>
             <button className="bg-green-600 rounded-3xl w-auto px-2 h-8 my-3 scale-on-hover" onClick={acceptTransactions}>Accept Transactions</button>
           </div>
         </> 

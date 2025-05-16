@@ -27,6 +27,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [viewedAccount, setViewedAccount] = useState(null);
   const [accounts, setAccounts] = useState([]);
+  const appAvailable = true
 
   // function fetchAccounts() {
   //   const accountsRef = collection(db, 'accounts');
@@ -164,10 +165,21 @@ function App() {
   );
 
   return (
-    <UserContext.Provider value={{ user, updateUser, viewedAccount, updateViewedAccount, accounts, updateAccounts, fetchAccounts, toastMessage }}>
-      <ToastContainer />
-      <RouterProvider router={router} />
-    </UserContext.Provider>
+    appAvailable ? (
+      <UserContext.Provider value={{ user, updateUser, viewedAccount, updateViewedAccount, accounts, updateAccounts, fetchAccounts, toastMessage }}>
+        <ToastContainer />
+        <div>
+          <RouterProvider router={router} />
+        </div>
+      </UserContext.Provider>
+    ) : (
+      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
+        <div className="text-center">
+          <h1 className="text-4xl mb-4">App Unavailable</h1>
+          <p className="text-lg">Come back later.</p>
+        </div>
+      </div>
+    )
   )
 }
 

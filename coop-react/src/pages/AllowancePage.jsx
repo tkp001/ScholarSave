@@ -29,23 +29,42 @@ const AllowancePage = () => {
     user_id: user.uid,
   });
 
+  function resetBudgetForm() {
+    setAddBudget(!addBudget);
+    setBudgetForm({
+      name: "",
+      category: "",
+      type: "Budget",
+      amount: "",
+      startDate: "",
+      endDate: "",
+      user_id: user.uid,
+    });
+  }
+
   const [availableCategories, setAvailableCategories] = useState([]);
 
   const handleBudgetForm = (e) => {
     const { name, value } = e.target;
-    setBudgetForm((prevFormData) => ({
-      ...prevFormData,
-      [name]: value,
-    }));
-    console.log(budgetForm);
-    
-    const startDate = new Date(budgetForm.startDate);
-    const endDate = new Date(budgetForm.endDate);
+    setBudgetForm((prevFormData) => {
+      const updatedForm = { ...prevFormData, [name]: value };
 
-    if (startDate && endDate && startDate <= endDate) {
-      const filteredCategories = getCategoriesWithinDateRange(startDate, endDate);
-      setAvailableCategories(filteredCategories);
-    }
+      // Only update categories if startDate or endDate changed
+      if (
+        (name === "startDate" || name === "endDate") &&
+        updatedForm.startDate &&
+        updatedForm.endDate
+      ) {
+        const startDate = new Date(updatedForm.startDate);
+        const endDate = new Date(updatedForm.endDate);
+        if (startDate <= endDate) {
+          const filteredCategories = getCategoriesWithinDateRange(startDate, endDate);
+          setAvailableCategories(filteredCategories);
+        }
+      }
+
+      return updatedForm;
+    });
   };
 
   function getCategoriesWithinDateRange(startDate, endDate) {
@@ -93,8 +112,8 @@ const AllowancePage = () => {
     const budgetsRef = collection(db, "allowances");
     await addDoc(budgetsRef, {
       ...budgetForm,
-      startDate: new Date(budgetForm.startDate).toLocaleDateString(), // Convert to local date format
-      endDate: new Date(budgetForm.endDate).toLocaleDateString(), // Convert to local date format
+      startDate: budgetForm.startDate,
+      endDate: budgetForm.endDate,
       account_number: viewedAccount.account_number,
     });
 
@@ -228,6 +247,20 @@ const AllowancePage = () => {
     account_number: viewedAccount?.account_number,
   });
 
+  function resetSavingForm() {
+    setAddSaving(!addSaving);
+    setSavingForm({
+      name: "",
+      category: "",
+      type: "Saving",
+      amount: "",
+      startDate: "",
+      endDate: "",
+      user_id: user.uid,
+      account_number: viewedAccount?.account_number,
+    });
+  }
+
   const handleSavingForm = (e) => {
     const { name, value } = e.target;
     setSavingForm((prevFormData) => ({
@@ -298,8 +331,8 @@ const AllowancePage = () => {
       // Add the saving to Firestore
       await addDoc(savingsRef, {
         ...savingForm,
-        startDate: new Date(savingForm.startDate).toLocaleDateString(), // Convert to local date format
-        endDate: new Date(savingForm.endDate).toLocaleDateString(), // Convert to local date format
+        startDate: savingForm.startDate,
+        endDate: savingForm.endDate,
         account_number: viewedAccount.account_number,
         category: savingForm.name,
       });
@@ -318,24 +351,24 @@ const AllowancePage = () => {
         const end = new Date(endDate);
   
         // Iterate through all months in the date range
-        let current = new Date(start);
-        while (current <= end) {
-          const year = current.getFullYear().toString();
-          const month = (current.getMonth() + 1).toString().padStart(2, "0"); // Ensure month is 2 digits
+        // let current = new Date(start);
+        // while (current <= end) {
+        //   const year = current.getFullYear().toString();
+        //   const month = (current.getMonth() + 1).toString().padStart(2, "0"); // Ensure month is 2 digits
   
-          if (!categoryBreakdown[year]) {
-            categoryBreakdown[year] = {};
-          }
-          if (!categoryBreakdown[year][month]) {
-            categoryBreakdown[year][month] = {};
-          }
-          if (!categoryBreakdown[year][month][name]) {
-            categoryBreakdown[year][month][name] = 0; // Initialize the category with 0
-          }
+        //   if (!categoryBreakdown[year]) {
+        //     categoryBreakdown[year] = {};
+        //   }
+        //   if (!categoryBreakdown[year][month]) {
+        //     categoryBreakdown[year][month] = {};
+        //   }
+        //   if (!categoryBreakdown[year][month][name]) {
+        //     categoryBreakdown[year][month][name] = 0; // Initialize the category with 0
+        //   }
   
-          // Move to the next month
-          current.setMonth(current.getMonth() + 1);
-        }
+        //   // Move to the next month
+        //   current.setMonth(current.getMonth() + 1);
+        // }
   
         // Update the account document in Firestore
         await updateDoc(accountDocRef, { categoryBreakdown });
@@ -408,11 +441,14 @@ const AllowancePage = () => {
     <div className="flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white">
       <div className="flex flex-col w-full p-10 max-w-250">
         <AccountViewer />
+        {!viewedAccount && (
+          <div className="text-xl my-2 mb-5 fade-in">Please select an account to view details.</div>
+        )}
 
         {viewedAccount && (
           <>
           {budgets.length > 0 ? (
-          <div key={animateKey} className="bg-gray-700 p-5 rounded-xl mt-5 stagger-container">
+          <div key={animateKey} className="bg-gray-700 p-5 rounded-xl mt-5 stagger-container min-w-210 w-auto">
             <h3 className="text-2xl mb-3">Budgets</h3>
             <ul>
               {budgets.map((budget) => {
@@ -448,7 +484,7 @@ const AllowancePage = () => {
         )}
 
         {savings.length > 0 ? (
-          <div className="bg-gray-700 p-5 rounded-xl mt-5 stagger-container">
+          <div className="bg-gray-700 p-5 rounded-xl mt-5 stagger-container min-w-210 w-auto">
             <h3 className="text-2xl mb-3">Savings</h3>
             <ul>
               {savings.map((saving) => {
@@ -461,8 +497,8 @@ const AllowancePage = () => {
                       saving={saving}
                       name={saving.name}
                       goalAmount={saving.amount}
-                      startDate={new Date(saving.startDate).toLocaleDateString()}
-                      endDate={new Date(saving.endDate).toLocaleDateString()}
+                      startDate={saving.startDate}
+                      endDate={saving.endDate}
                       savedAmount={savedAmount}
                       progress={progress}
                       handleDeleteSaving={() => handleDeleteSaving(saving.id)}
@@ -556,7 +592,7 @@ const AllowancePage = () => {
               </button>
               <button
                 className="w-fit h-8 bg-red-600 rounded-4xl px-2 my-5 scale-on-hover"
-                onClick={() => setAddBudget(!addBudget)}
+                onClick={() => resetBudgetForm()}
               >
                 Cancel
               </button>
@@ -606,7 +642,7 @@ const AllowancePage = () => {
               </button>
               <button
                 className="w-fit h-8 bg-red-600 rounded-4xl px-2 my-5 scale-on-hover"
-                onClick={() => setAddSaving(false)}
+                onClick={() => resetSavingForm()}
               >
                 Cancel
               </button>

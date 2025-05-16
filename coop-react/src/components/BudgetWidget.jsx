@@ -23,7 +23,7 @@ const BudgetWidget = ({
 
     return (
     <div className='flex flex-row items-center'>
-      <div className='w-180 h-35 my-3 mr-5 p-1 rounded-3xl '>
+      <div className='w-180 h-35 my-3 mr-5 p-1 rounded-3xl'>
         <div className='w-full h-full p-1 rounded-3xl' style={{backgroundColor: color}}>
             <div className='flex bg-gray-700 w-full h-full rounded-3xl p-5'>
                 <div className='flex flex-row justify-left items-center'>

@@ -4,6 +4,17 @@ import { FaTrash } from "react-icons/fa";
 
 
 const TransactionList = ({ transactions, filterTransactions, handleFilterTransaction, handleDeleteTransaction}) => {
+  // Filter transactions by name and category
+  const filteredTransactions = transactions.filter(transaction => {
+    const nameMatch = filterTransactions.name
+      ? transaction.name.toLowerCase().includes(filterTransactions.name.toLowerCase())
+      : true;
+    const categoryMatch = filterTransactions.category
+      ? transaction.category.toLowerCase().includes(filterTransactions.category.toLowerCase())
+      : true;
+    return nameMatch && categoryMatch;
+  });
+  
   return (
     <div>
       <ul className="bg-gray-700 p-2 rounded-3xl min-w-100">
@@ -122,7 +133,7 @@ const TransactionList = ({ transactions, filterTransactions, handleFilterTransac
         </div>
         <div className="flex flex-nowrap overflow-auto no-scrollbar items-center">
           <div className="flex flex-col w-full h-60">
-            {transactions.map((transaction) => (
+            {filteredTransactions.map((transaction) => (
               <li
                 key={transaction.id}
                 

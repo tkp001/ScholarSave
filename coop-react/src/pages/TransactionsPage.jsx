@@ -52,6 +52,7 @@ const TransactionsPage = () => {
   });
 
   function resetTransactionForm() {
+    setAddTransaction(!addTransaction);
     setTransactionForm({
       name: "",
       category: "Salary/Income",
@@ -75,6 +76,7 @@ const TransactionsPage = () => {
   });
 
   function resetTransferForm() {
+    setTransferMoney(!transferMoney);
     setTransferForm({
       sourceAccount: "",
       destinationAccount: "",
@@ -156,21 +158,26 @@ const TransactionsPage = () => {
 
   const handleTransactionForm = (e) => {
     const { name, value } = e.target;
-  
-    if (name === "date") {
-      // Parse the input date as a local date
-      const localDate = new Date(value);
-  
-      // Normalize to midnight UTC
-      // const utcDate = new Date(localDate.getTime());
-  
-      const fullDate = Timestamp.fromDate(localDate); // Store as Firestore Timestamp
-      // console.log("fullDate", utcDate);
 
+    if (name === "date") {
+      const localDate = new Date(value);
+      const fullDate = Timestamp.fromDate(localDate);
       setTransactionForm((prevFormData) => ({
         ...prevFormData,
-        date: value, // Keep the original date string (YYYY-MM-DD)
-        fullDate: fullDate, // Store the date
+        date: value,
+        fullDate: fullDate,
+      }));
+    } else if (name === "category") {
+      setTransactionForm((prevFormData) => ({
+        ...prevFormData,
+        category: value,
+        customCategory: value === "Custom Category",
+      }));
+    } else if (name === "customCategory") {
+      setTransactionForm((prevFormData) => ({
+        ...prevFormData,
+        category: value,
+        customCategory: true,
       }));
     } else {
       setTransactionForm((prevFormData) => ({
@@ -187,7 +194,7 @@ const TransactionsPage = () => {
         type: typeValue,
       }));
     }
-  
+
     console.log("transactionForm", transactionForm);
   };
   
@@ -382,9 +389,9 @@ const TransactionsPage = () => {
   }
 
   async function handleDeleteTransaction(id) {
-    const confirmDelete = window.confirm("Are you sure you want to delete this transaction?");
+    // const confirmDelete = window.confirm("Are you sure you want to delete this transaction?");
   
-    if (!confirmDelete) return;
+    // if (!confirmDelete) return;
   
     try {
       const transactionDocRef = doc(db, "transactions", id);
@@ -432,6 +439,12 @@ const TransactionsPage = () => {
   
     // Extract year and month from the date
     const parsedDate = new Date(date);
+    
+    if (isNaN(parsedDate.getTime())) {
+      console.error("Invalid date for category breakdown:", date);
+      return; // Don't update if date is invalid
+    }
+
     const year = parsedDate.getFullYear().toString(); // e.g., "2025"
     const month = (parsedDate.getMonth() + 1).toString().padStart(2, "0"); // e.g., "04"
   
@@ -521,6 +534,11 @@ const TransactionsPage = () => {
           console.error("Invalid transaction data:", transaction);
           return;
         }
+        const parsedDate = new Date(date);
+        if (isNaN(parsedDate.getTime())) {
+          console.error("Invalid date in imported transaction:", transaction);
+          return;
+        }
   
         let type;
         
@@ -559,7 +577,8 @@ const TransactionsPage = () => {
         const accountDocRef = doc(db, "accounts", viewedAccount.id);
         await updateDoc(accountDocRef, {
           last_transaction: lastTransactionId,
-          last_modified: lastTransactionDate.toLocaleString(),
+          // last_modified: lastTransactionDate.toLocaleString(),
+          last_modified: new Date().toLocaleString(),
         });
       }
 
@@ -636,6 +655,10 @@ const TransactionsPage = () => {
       <div className="flex flex-col w-full p-10 max-w-250">
         <AccountViewer />
         
+        {!viewedAccount && (
+          <div className="text-xl my-2 mb-5 fade-in">Please select an account to view details.</div>
+        )}
+
         {viewedAccount && ( 
         <>  
           <ImportTransactions importCorrectedTransactions={importCorrectedTransactions}/>
