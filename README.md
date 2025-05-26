@@ -17,9 +17,6 @@ A financial management application that allows students to track their spending.
 - **Real-Time Categorization**  
   AI-powered suggestions for categorizing transactions (e.g., food, transport, subscriptions).
 
-- **Recurring Expense & Subscription Tracking**  
-  Set up recurring expenses and instalment payments. Get notified before upcoming payments.
-
 - **Bill Reminder & Due Date Tracking**  
   Never miss a payment with automated reminders.
 
