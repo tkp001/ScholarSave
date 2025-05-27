@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import UserContext from "../UserContext";
 import "../App.css";
 import { useDropzone } from "react-dropzone";
 import csv from "csvtojson";
 import { GoogleGenAI } from "@google/genai";
 import { Timestamp } from "firebase/firestore"; // Import Timestamp from Firestore
 import { PulseLoader } from "react-spinners";
+import { toast } from "react-toastify";
 
 const ImportTransactions = ({importCorrectedTransactions}) => {
   const [parsedData, setParsedData] = useState([]); // State to store parsed CSV data
@@ -12,6 +14,7 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
   const ai = new GoogleGenAI({ apiKey: api });
   const [response, setResponse] = useState(null); // State to store AI response
   const [responseData, setResponseData] = useState(null); // State to store AI response data
+  const {toastMessage} = useContext(UserContext);
 
     function acceptTransactions() {
         importCorrectedTransactions(responseData);
@@ -22,55 +25,60 @@ const ImportTransactions = ({importCorrectedTransactions}) => {
     }
 
     async function AIEnhance(q) {
-      if (q) {
-        const response = await ai.models.generateContent({
-          model: "gemini-2.0-flash",
-          temperature: 0.2,
-          contents:
-            "present the data: " +
-            q +
-            " in JSON format, include the headings (Name, Date in YYYY-MM-DD, Category, Amount), all headings are lowercase. Do not include any additional text outside the JSON object. name of JSON is data",
-        });
-    
-        // Manually clean and format the response
-        let cleanedResponse = response.text.trim(); // Remove leading/trailing whitespace
-    
-        // Find the start and end of the JSON object
-        const jsonStartIndex = cleanedResponse.indexOf("{");
-        const jsonEndIndex = cleanedResponse.lastIndexOf("}");
-    
-        if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-          cleanedResponse = cleanedResponse.slice(
-            jsonStartIndex,
-            jsonEndIndex + 1
-          ); // Extract the JSON object
-        } else {
-          throw new Error("Invalid JSON format in API response.");
-        }
-    
-        // Parse the cleaned JSON
-        const parsedResponse = JSON.parse(cleanedResponse);
-    
-        // Add fullDate to each transaction
-        const transactionsWithFullDate = parsedResponse.data.map((transaction) => {
-          const [year, month, day] = transaction.date.split("-").map(Number);
-          const fullYear = year < 100 ? 2000 + year : year; // Handle 2-digit year (e.g., 25 -> 2025)
-          const utcDate = new Date(Date.UTC(fullYear, month - 1, day));
-          const localDate = new Date(utcDate);
+      try {
+        if (q) {
+          const response = await ai.models.generateContent({
+            model: "gemini-2.0-flash",
+            temperature: 0.2,
+            contents:
+              "present the data: " +
+              q +
+              " in JSON format, include the headings (Name, Date in YYYY-MM-DD, Category, Amount), all headings are lowercase. Amount is positive or negative, depending on gain or loss. Do not include any additional text outside the JSON object. name of JSON is data",
+          });
+      
+          // Manually clean and format the response
+          let cleanedResponse = response.text.trim(); // Remove leading/trailing whitespace
+      
+          // Find the start and end of the JSON object
+          const jsonStartIndex = cleanedResponse.indexOf("{");
+          const jsonEndIndex = cleanedResponse.lastIndexOf("}");
+      
+          if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
+            cleanedResponse = cleanedResponse.slice(
+              jsonStartIndex,
+              jsonEndIndex + 1
+            ); // Extract the JSON object
+          } else {
+            toastMessage("Invalid AI response format", "error");
+          }
+      
+          // Parse the cleaned JSON
+          const parsedResponse = JSON.parse(cleanedResponse);
+      
+          // Add fullDate to each transaction
+          const transactionsWithFullDate = parsedResponse.data.map((transaction) => {
+            const [year, month, day] = transaction.date.split("-").map(Number);
+            const fullYear = year < 100 ? 2000 + year : year; // Handle 2-digit year (e.g., 25 -> 2025)
+            const utcDate = new Date(Date.UTC(fullYear, month - 1, day));
+            const localDate = new Date(utcDate);
+              
+            const fullDate = Timestamp.fromDate(localDate); 
             
-          const fullDate = Timestamp.fromDate(localDate); 
-          
-          return {
-            ...transaction,
-            fullDate: fullDate.toDate(),
-          };
-        });
-    
-        // Update the state with the processed transactions
-        setResponse(transactionsWithFullDate);
-        setResponseData({ data: transactionsWithFullDate });
-    
-        console.log("Transactions with Full Date:", transactionsWithFullDate);
+            return {
+              ...transaction,
+              fullDate: fullDate.toDate(),
+            };
+          });
+      
+          // Update the state with the processed transactions
+          setResponse(transactionsWithFullDate);
+          setResponseData({ data: transactionsWithFullDate });
+      
+          console.log("Transactions with Full Date:", transactionsWithFullDate);
+        }
+      } catch (error) {
+        console.error("Error in AIEnhance:", error);
+        toastMessage("Error processing transactions with AI", "error");
       }
     }
   

@@ -1,7 +1,7 @@
 import React from 'react';
 import '../App.css';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
-import { useState, useContext } from 'react';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, sendPasswordResetEmail, sendEmailVerification} from "firebase/auth";
+import { useState, useContext, useEffect } from 'react';
 import UserContext from '../UserContext';
 import { SiSemanticscholar } from "react-icons/si";
 import { toast } from 'react-toastify';
@@ -16,6 +16,8 @@ const AuthPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authErrorMessage, setAuthErrorMessage] = useState(null);
+  const [emailLinkSent, setEmailLinkSent] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   function authSignout() {
     signOut(auth).then(() => {
@@ -31,6 +33,16 @@ const AuthPage = () => {
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         console.log(userCredential.user);
+        toastMessage("Account created successfully!", "success");
+        // Send verification email
+        sendEmailVerification(userCredential.user)
+          .then(() => {
+            toastMessage("Verification email sent! Please check your inbox.", "success");
+          })
+          .catch((error) => {
+            setAuthMessage(error.code, error.message);
+            toastMessage("Error sending verification email!", "error");
+          });
       })
       .catch((error) => {
         console.error(error.code, error.message);
@@ -89,6 +101,55 @@ const AuthPage = () => {
     }
   }
 
+  function sendEmailLink() {
+    setAuthErrorMessage(null);
+    const actionCodeSettings = {
+      url: `${window.location.origin}/auth`, // Redirect URL
+      handleCodeInApp: true,
+    };
+    sendSignInLinkToEmail(auth, email, actionCodeSettings)
+      .then(() => {
+        window.localStorage.setItem('emailForSignIn', email);
+        setEmailLinkSent(true);
+        toastMessage("Sign-in link sent! Check your email.", "success");
+      })
+      .catch((error) => {
+        setAuthMessage(error.code, error.message);
+      });
+  }
+
+  useEffect(() => {
+    console.log("Checking for email link sign-in...");
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+      let emailForSignIn = window.localStorage.getItem('emailForSignIn');
+      if (!emailForSignIn) {
+        toastMessage("No email found for sign-in.", "error");
+        return;
+      }
+      signInWithEmailLink(auth, emailForSignIn, window.location.href)
+        .then((result) => {
+          window.localStorage.removeItem('emailForSignIn');
+          setUser(result.user);
+          toastMessage("Signed in successfully!", "success");
+        })
+        .catch((error) => {
+          setAuthMessage(error.code, error.message);
+        });
+    }
+  }, [auth, setUser]);
+
+  function handlePasswordReset() {
+    setAuthErrorMessage(null);
+    sendPasswordResetEmail(auth, email)
+      .then(() => {
+        setResetEmailSent(true);
+        toastMessage("Password reset email sent! Check your inbox.", "success");
+      })
+      .catch((error) => {
+        setAuthMessage(error.code, error.message);
+      });
+  }
+
   return (
     <div className='bg-gray-700'>
       <div className="flex flex-row w-screen h-screen items-center justify-center bg-gray-700">
@@ -139,18 +200,39 @@ const AuthPage = () => {
                   )}
                 </div>
                 <div>
-                  <button
-                    className="m-1 px-3 rounded-xl bg-gray-500 scale-on-hover"
-                    onClick={authSignupPassword}
-                  >
-                    Register
-                  </button>
-                  <button
-                    className="m-1 px-3 rounded-xl bg-gray-500 scale-on-hover"
-                    onClick={authSigninPassword}
-                  >
-                    Log In
-                  </button>
+                  <div className='flex flex-row items-center'>
+                    <button
+                      className="m-1 px-3 rounded-xl bg-gray-500 scale-on-hover"
+                      onClick={authSignupPassword}
+                    >
+                      Register
+                    </button>
+                    <button
+                      className="m-1 px-3 rounded-xl bg-gray-500 scale-on-hover"
+                      onClick={authSigninPassword}
+                    >
+                      Log In
+                    </button>
+                  </div>
+                  
+                  {email && (
+                    <div className='fade-in flex flex-col items-center'> 
+                      <button
+                        className="mt-1 px-1 rounded-xl bg-gray-500 scale-on-hover"
+                        onClick={sendEmailLink}
+                        disabled={!email}
+                      >
+                        Sign in with Email Link
+                      </button>
+                      <button
+                        className="mt-1 px-1 rounded-xl bg-red-600 scale-on-hover"
+                        onClick={handlePasswordReset}
+                        disabled={!email}
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <PulseLoader 
                   className='my-4'

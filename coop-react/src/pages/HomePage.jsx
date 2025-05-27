@@ -10,6 +10,7 @@ import AccountViewer from '../components/AccountViewer';
 import jsPDF from "jspdf";
 import { PulseLoader } from "react-spinners";
 import ReactMarkdown from 'react-markdown';
+import { toast } from 'react-toastify';
 
 // import { Chart } from 'chart.js/auto';
 
@@ -249,15 +250,22 @@ const HomePage = () => {
       Category Change Data: ${JSON.stringify(accountData.categoryChangeData, null, 2)}
     `;
   
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      temperature: 0.2,
-      contents: `Provide summarized in 100 words or less insights or suggestions based on the following user data:\n\n${formattedData}\n\n`,
-    });
-  
-    // Log the response
-    console.log("AI Insights Response:", response.text);
-    setAiInsight(response.text);
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash",
+        temperature: 0.2,
+        contents: `Provide summarized in 100 words or less insights or suggestions based on the following user data:\n\n${formattedData}\n\n`,
+      });
+      // Log the response
+      console.log("AI Insights Response:", response.text);
+      setAiInsight(response.text);
+
+    } catch (error) {
+      toastMessage("Error getting AI insights", "error");
+      setAiInsight("Sorry, there was an error getting insights.");
+    }
+
+    
   }
   
   const [aiQuestion, setAiQuestion] = useState('');
@@ -278,6 +286,7 @@ const HomePage = () => {
       setAiAnswer(response.text);
     } catch (err) {
       setAiAnswer("Sorry, there was an error getting an answer.");
+      toastMessage("Error getting AI answer", "error");
     }
     setAiLoading(false);
   }
@@ -299,8 +308,8 @@ const HomePage = () => {
     if (
       viewedAccount &&
       monthlyBalance.length > 0 &&
-      top5Income.length > 0 &&
-      top5Spending.length > 0 &&
+      (top5Income.length > 0 ||
+      top5Spending.length > 0) &&
       monthlyBalances.length > 0 &&
       categoryChangeData.labels.length > 0
     ) {
@@ -312,6 +321,9 @@ const HomePage = () => {
         categoryChangeData,
       });
       console.log("AI Insights triggered");
+    } else {
+      setAiInsight("Please gather more data to view insights.");
+      toastMessage("Please gather more data to view insights.", "warning");
     }
   }, [viewedAccount]);
 

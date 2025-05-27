@@ -65,8 +65,8 @@ async function askQuestion(q) {
       console.log("Parsed Response:", parsed);
       setResponse(parsed);
     } catch (err) {
-      console.error("Error parsing response:", err);
-      toastMessage("Error parsing response. Please try again.", "error");
+      console.error("Error getting response:", err);
+      toastMessage("Error fetching response. Please try again.", "error");
     }
     setResponseLoading(false);
   }
@@ -157,7 +157,8 @@ async function fetchSuggestedTopics(topics) {
     setTopicsLoading(false);
     
   } catch (error) {
-    console.error("Error fetching or parsing suggested topics:", error);
+    console.error("Error fetching suggested topics:", error);
+    toastMessage("Error fetching suggested topics. Please try again.", "error");
     setTopicsLoading(false);
     // fetchSuggestedTopics();
   }
@@ -166,11 +167,6 @@ async function fetchSuggestedTopics(topics) {
 useEffect(() => {
   fetchSuggestedTopics();
 }, []);
-
-function formatMarkdown(markdownText) {
-  const html = marked(markdownText, { gfm: true });
-  return html;
-}
 
 function askSuggestedQuestion(q) {
   setQuestion(q);

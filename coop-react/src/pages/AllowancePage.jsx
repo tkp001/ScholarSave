@@ -437,6 +437,32 @@ const AllowancePage = () => {
     }
   }
 
+  function getBudgetReminder(budget, spentAmount) {
+    const end = new Date(budget.endDate);
+    const today = new Date();
+    const daysLeft = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+    if (spentAmount > budget.amount) {
+      return <div className="text-red-400 text-sm">⚠️ You have overspent this budget!</div>;
+    }
+    if (daysLeft <= 3 && daysLeft >= 0) {
+      return <div className="text-yellow-300 text-sm">⏰ Only {daysLeft} day(s) left for this budget!</div>;
+    }
+    return null;
+  }
+
+function getSavingReminder(saving, savedAmount) {
+  const end = new Date(saving.endDate);
+  const today = new Date();
+  const daysLeft = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+  if (savedAmount < saving.amount && daysLeft <= 3 && daysLeft >= 0) {
+    return <div className="text-yellow-300 text-sm">⏰ Only {daysLeft} day(s) left to reach your saving goal!</div>;
+  }
+  if (savedAmount >= saving.amount) {
+    return <div className="text-green-400 text-sm">🎉 Saving goal reached!</div>;
+  }
+  return null;
+}
+
   return (
     <div className="flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white">
       <div className="flex flex-col w-full p-10 max-w-250">
@@ -471,6 +497,7 @@ const AllowancePage = () => {
                       // endDate={new Date(budget.endDate).toLocaleDateString()}
                       progress={progress}
                     />
+                    {getBudgetReminder(budget, currentAmount.spent)}
                   </li>
                 );
               })}
@@ -503,6 +530,7 @@ const AllowancePage = () => {
                       progress={progress}
                       handleDeleteSaving={() => handleDeleteSaving(saving.id)}
                     />
+                    {getSavingReminder(saving, savedAmount)}
                   </li>
                 );
               })}

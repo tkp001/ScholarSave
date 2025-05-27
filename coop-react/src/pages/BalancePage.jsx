@@ -130,7 +130,7 @@ const BalancePage = () => {
   };
 
   const addNewAccount = async () => {
-    if (!accountForm.nickname || !accountForm.account_number || !accountForm.balance) {
+    if (!accountForm.nickname || !accountForm.account_number || accountForm.balance === "") {
       toastMessage("All fields are required", "warning");
     } else {
       try {
@@ -203,7 +203,7 @@ const BalancePage = () => {
           <div className="flex flex-col max-w-100 min-w-60 w-100 p-4 h-full stagger-container">
           <div className="text-xl mb-4">Accounts</div>
           {accounts.slice(0, 5).map((acc) => (
-            <div key={acc.id} className="mb-3 p-2 bg-gray-700 rounded-xl">
+            <div key={acc.id} className="mb-3 p-2 bg-gray-700 rounded-xl" onClick={() => updateViewedAccount(acc)}>
               <div className="font-semibold">{acc.nickname}</div>
               <div className="text-xs text-gray-300">#{acc.account_number}</div>
               <div className="text-sm">Balance: ${parseFloat(acc.balance).toFixed(2)}</div>

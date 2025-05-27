@@ -213,7 +213,7 @@ const TransactionsPage = () => {
       setTransferForm((prevFormData) => ({
         ...prevFormData,
         date: value, // Keep the original date string (YYYY-MM-DD)
-        fullDate: fullDate, // Store the date
+        fullDate: fullDate, // Store the date 
       }));
     } else {
       setTransferForm((prevFormData) => ({
