@@ -25,153 +25,175 @@ const [formattedResponse, setFormattedResponse] = useState(null);
 const [suggestedTopics, setSuggestedTopics] = useState([]);
 const [selectedSection, setSelectedSection] = useState('main');
 
-async function askQuestion(q) {
-  if (q) {
-    setResponseLoading(true);
-    setSelectedSection('main');
-    setChatResponse(null);
-    setChatQuestion("");
+  /**
+   * Ask a finance-related question and get a structured AI response.
+   * Updates the response state with parsed JSON from the AI.
+   * @param {string} q - The finance question to ask.
+   */
+  async function askQuestion(q) {
+    if (q) {
+      setResponseLoading(true);
+      setSelectedSection('main');
+      setChatResponse(null);
+      setChatQuestion("");
+      try {
+        const response = await ai.models.generateContent({
+          model: "gemini-2.0-flash",
+          temperature: 0.2,
+          contents: `
+          DO NOT ANSWER ANY QUESTIONS UNRELATED TO FINANCE.
+          Question: ${q}
+          Respond ONLY in JSON format with the following structure:
+          {
+            "main": "A detailed answer to the question, explained simply.",
+            "definitions": "A list or paragraph of key definitions relevant to the question.",
+            "summary": "A short summary of the main answer.",
+            "links_resources": ["A list of 5-10 reputable links or resources for further reading."]
+            "examples": ["A list of 5-10 examples relevant to the question."],
+            "related_topics": ["A list of 5-10 related topics for further exploration."],
+            "case_studies": ["A list of 5-10 case studies or real-world examples that illustrate the topic."],
+            "applications": ["A list of 5-10 practical applications or uses of the topic in real life."],
+            "future_outlook": ["A list of 5-10 current trends or developments/predictions related to the topic.],
+          }
+          Do not include any text outside the JSON object. Name of JSON is response.
+          Use github markdown.
+          `,
+        });
+        // Try to extract and parse JSON from the response
+        let cleaned = response.text.trim();
+        const jsonStart = cleaned.indexOf("{");
+        const jsonEnd = cleaned.lastIndexOf("}");
+        if (jsonStart !== -1 && jsonEnd !== -1) {
+          cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
+        }
+        const parsed = JSON.parse(cleaned);
+        console.log("Parsed Response:", parsed);
+        setResponse(parsed);
+      } catch (err) {
+        console.error("Error getting response:", err);
+        toastMessage("Error fetching response. Please try again.", "error");
+      }
+      setResponseLoading(false);
+    }
+  }
+
+  const sectionLabels = {
+    main: "Main",
+    definitions: "Definitions",
+    summary: "Summary",
+    links_resources: "Links & Resources",
+    examples: "Examples",
+    related_topics: "Related Topics",
+    case_studies: "Case Studies",
+    applications: "Applications",
+    future_outlook: "Future Outlook"
+  };
+
+  /**
+   * Ask a follow-up chat question based on the main AI response.
+   * Updates the chatResponse state with the AI's answer.
+   * @param {string} chatQuestion - The follow-up question to ask.
+   */
+  async function askChat(chatQuestion) {
+    if (!chatQuestion) {
+      toastMessage("Please enter a question", "warning");
+      return;
+    }
+
+    setChatResponseLoading(true);
+
+    try {
+      const chatResponse = await ai.models.generateContent({
+        model: "gemini-2.0-flash",
+        contents: `DO NOT ANSWER ANY QUESTIONS UNRELATED TO FINANCE. Based on the following response: "${JSON.stringify(response)}", answer the follow-up question: "${chatQuestion}". Provide a clear answer.`,
+      });
+
+      console.log("Chat Response:", chatResponse.text);
+      setChatResponse(chatResponse.text); // Update the response with the chat response
+      
+    } catch (error) {
+      console.error("Error in askChat:", error);
+      toastMessage("Error fetching chat response", "error");
+    } finally {
+      setChatResponseLoading(false);
+    }
+  }
+
+  /**
+   * Fetch a list of suggested finance topics from the AI.
+   * Updates the suggestedTopics state with parsed topics.
+   * @param {string} [topics] - Optional keywords to filter suggested topics.
+   */
+  async function fetchSuggestedTopics(topics) {
+    setTopicsLoading(true);
+    let q;
+    if (topics) {
+      q = "keywords: " + topics
+    } else {q = "suggested finance"}
+    
+    console.log("Fetching suggested topics for:", q);
+
     try {
       const response = await ai.models.generateContent({
         model: "gemini-2.0-flash",
-        temperature: 0.2,
-        contents: `
-        DO NOT ANSWER ANY QUESTIONS UNRELATED TO FINANCE.
-        Question: ${q}
-        Respond ONLY in JSON format with the following structure:
-        {
-          "main": "A detailed answer to the question, explained simply.",
-          "definitions": "A list or paragraph of key definitions relevant to the question.",
-          "summary": "A short summary of the main answer.",
-          "links_resources": ["A list of 5-10 reputable links or resources for further reading."]
-          "examples": ["A list of 5-10 examples relevant to the question."],
-          "related_topics": ["A list of 5-10 related topics for further exploration."],
-          "case_studies": ["A list of 5-10 case studies or real-world examples that illustrate the topic."],
-          "applications": ["A list of 5-10 practical applications or uses of the topic in real life."],
-          "future_outlook": ["A list of 5-10 current trends or developments/predictions related to the topic.],
-        }
-        Do not include any text outside the JSON object. Name of JSON is response.
-        Use github markdown.
-        `,
+        contents: "Generate a list of 10 " + q + " topics with titles and descriptions. The response should be in JSON format, with each topic containing a 'title' and a 'description'. Do not include any additional text outside the JSON object. name of JSON is finance_topics",
       });
-      // Try to extract and parse JSON from the response
-      let cleaned = response.text.trim();
-      const jsonStart = cleaned.indexOf("{");
-      const jsonEnd = cleaned.lastIndexOf("}");
-      if (jsonStart !== -1 && jsonEnd !== -1) {
-        cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
+
+      console.log("Raw API Response:", response.text);
+
+      // Manually clean and format the response
+      let cleanedResponse = response.text.trim(); // Remove leading/trailing whitespace
+
+      // Find the start and end of the JSON object
+      const jsonStartIndex = cleanedResponse.indexOf("{");
+      const jsonEndIndex = cleanedResponse.lastIndexOf("}");
+
+      if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
+        cleanedResponse = cleanedResponse.slice(jsonStartIndex, jsonEndIndex + 1); // Extract the JSON object
+      } else {
+        throw new Error("Invalid JSON format in API response.");
       }
-      const parsed = JSON.parse(cleaned);
-      console.log("Parsed Response:", parsed);
-      setResponse(parsed);
-    } catch (err) {
-      console.error("Error getting response:", err);
-      toastMessage("Error fetching response. Please try again.", "error");
-    }
-    setResponseLoading(false);
-  }
-}
-
-const sectionLabels = {
-  main: "Main",
-  definitions: "Definitions",
-  summary: "Summary",
-  links_resources: "Links & Resources",
-  examples: "Examples",
-  related_topics: "Related Topics",
-  case_studies: "Case Studies",
-  applications: "Applications",
-  future_outlook: "Future Outlook"
-};
-
-async function askChat(chatQuestion) {
-  if (!chatQuestion) {
-    toastMessage("Please enter a question", "warning");
-    return;
-  }
-
-  setChatResponseLoading(true);
-
-  try {
-    const chatResponse = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: `DO NOT ANSWER ANY QUESTIONS UNRELATED TO FINANCE. Based on the following response: "${JSON.stringify(response)}", answer the follow-up question: "${chatQuestion}". Provide a clear answer.`,
-    });
-
-    console.log("Chat Response:", chatResponse.text);
-    setChatResponse(chatResponse.text); // Update the response with the chat response
-    
-  } catch (error) {
-    console.error("Error in askChat:", error);
-    toastMessage("Error fetching chat response", "error");
-  } finally {
-    setChatResponseLoading(false);
-  }
-}
-
-async function fetchSuggestedTopics(topics) {
-  setTopicsLoading(true);
-  let q;
-  if (topics) {
-    q = "keywords: " + topics
-  } else {q = "suggested finance"}
-  
-  console.log("Fetching suggested topics for:", q);
-
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: "Generate a list of 10 " + q + " topics with titles and descriptions. The response should be in JSON format, with each topic containing a 'title' and a 'description'. Do not include any additional text outside the JSON object. name of JSON is finance_topics",
-    });
-
-    console.log("Raw API Response:", response.text);
-
-    // Manually clean and format the response
-    let cleanedResponse = response.text.trim(); // Remove leading/trailing whitespace
-
-    // Find the start and end of the JSON object
-    const jsonStartIndex = cleanedResponse.indexOf("{");
-    const jsonEndIndex = cleanedResponse.lastIndexOf("}");
-
-    if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
-      cleanedResponse = cleanedResponse.slice(jsonStartIndex, jsonEndIndex + 1); // Extract the JSON object
-    } else {
-      throw new Error("Invalid JSON format in API response.");
-    }
-    
-    // Parse the cleaned JSON
-    console.log("Parsed Topics:", cleanedResponse);
-    const topics = JSON.parse(cleanedResponse);
-
-
-    setSuggestedTopics(topics.finance_topics); 
-
-    // // Ensure topics is an array
-    // if (Array.isArray(topics)) {
-    //   setTopicsLoading(false);
-    // } else if (topics.finance_topics && Array.isArray(topics.finance_topics)) {
       
-    // } else {  
-    //   throw new Error("Invalid JSON structure: Expected an array.");
-    // }
-    setTopicsLoading(false);
-    
-  } catch (error) {
-    console.error("Error fetching suggested topics:", error);
-    toastMessage("Error fetching suggested topics. Please try again.", "error");
-    setTopicsLoading(false);
-    // fetchSuggestedTopics();
+      // Parse the cleaned JSON
+      console.log("Parsed Topics:", cleanedResponse);
+      const topics = JSON.parse(cleanedResponse);
+
+
+      setSuggestedTopics(topics.finance_topics); 
+
+      // // Ensure topics is an array
+      // if (Array.isArray(topics)) {
+      //   setTopicsLoading(false);
+      // } else if (topics.finance_topics && Array.isArray(topics.finance_topics)) {
+        
+      // } else {  
+      //   throw new Error("Invalid JSON structure: Expected an array.");
+      // }
+      setTopicsLoading(false);
+      
+    } catch (error) {
+      console.error("Error fetching suggested topics:", error);
+      toastMessage("Error fetching suggested topics. Please try again.", "error");
+      setTopicsLoading(false);
+      // fetchSuggestedTopics();
+    }
   }
-}
 
-useEffect(() => {
-  fetchSuggestedTopics();
-}, []);
+  /**
+   * Fetch suggested topics when the component mounts.
+   */
+  useEffect(() => {
+    fetchSuggestedTopics();
+  }, []);
 
-function askSuggestedQuestion(q) {
-  setQuestion(q);
-  askQuestion(q);
-}
+  /**
+   * Ask a suggested question (from the topics list) and update the main question/response.
+   * @param {string} q - The suggested question to ask.
+   */
+  function askSuggestedQuestion(q) {
+    setQuestion(q);
+    askQuestion(q);
+  }
 
 
 return (

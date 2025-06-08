@@ -10,12 +10,18 @@ const SettingsPage = () => {
   const [verificationEmailSent, setVerificationEmailSent] = useState(false);
   const { toastMessage } = useContext(UserContext);
 
+  /**
+   * Send a verification email to the user's email address.
+   */
   function sendUserEmailVerification() {
     sendEmailVerification(auth.currentUser);
     setVerificationEmailSent(true);
     toastMessage("Verification email sent!", "success");
   }
 
+  /**
+   * Sign out the current user and show a toast message.
+   */
   function authSignout() {
     signOut(auth).then(() => {
       toastMessage("Signed out successfully!", "success");
@@ -24,6 +30,9 @@ const SettingsPage = () => {
     });
   }
 
+  /**
+   * Delete the user's account after confirmation.
+   */
   function endService() {
     const confirmDelete = confirm("Are you sure you want to delete your account? This action cannot be undone.");
     if (confirmDelete) {
@@ -35,6 +44,9 @@ const SettingsPage = () => {
     }
   }
 
+  /**
+   * Prompt the user to change their email and update it in Firebase Auth.
+   */
   function handleChangeEmail() {
     const newEmail = prompt("Enter your new email address:");
     const confirmChange = confirm(`Are you sure you want to change your email to ${newEmail}?`);
@@ -47,6 +59,9 @@ const SettingsPage = () => {
     }
   }
 
+  /**
+   * Prompt the user to reset or change their password and update it in Firebase Auth.
+   */
   function handlePasswordChange() {
     const confirmChange = confirm("Would you like to reset your password via EMAIL?");
     if (confirmChange) {
@@ -70,6 +85,9 @@ const SettingsPage = () => {
     }
   }
 
+  /**
+   * Prompt the user to change their display name and update it in Firebase Auth.
+   */
   function handleNameChange() {
     const name = prompt("Enter your new name:");
     const confirmChange = confirm(`Is ${name} ok?`);

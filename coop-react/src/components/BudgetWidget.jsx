@@ -3,7 +3,6 @@ import '../App.css';
 import { MdEdit } from "react-icons/md";
 import { FaTrash } from "react-icons/fa";
 
-
 const BudgetWidget = ({
   budget, 
   name="name", 

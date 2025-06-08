@@ -7,6 +7,10 @@ import UserContext from '../UserContext';
 const ToolsPage = () => {
   const [isContentVisible, setIsContentVisible] = useState([false, false, false]);
 
+  /**
+   * Toggle the visibility of a tool section by index.
+   * @param {number} i - The index of the tool section to toggle.
+   */
   const toggleContent = (i) => {
     setIsContentVisible((prevState) =>
       prevState.map((visible, index) => (index === i ? !visible : visible))
@@ -70,6 +74,9 @@ const ToolsPage = () => {
 
 
 
+/**
+ * InterestPredictionsTool component - Calculates and visualizes simple and compound interest.
+ */
 const InterestPredictionsTool = () => {
   const {toastMessage} = useContext(UserContext);
   const [principal, setPrincipal] = useState('');
@@ -80,6 +87,9 @@ const InterestPredictionsTool = () => {
   const [result, setResult] = useState(null);
   const [chartData, setChartData] = useState(null);
 
+  /**
+   * Calculate simple or compound interest and update chart/result state.
+   */
   const calculateInterest = () => {
     const principalAmount = parseFloat(principal);
     const interestRate = parseFloat(rate) / 100;
@@ -229,6 +239,9 @@ const InterestPredictionsTool = () => {
   );
 };
 
+/**
+ * CurrencyExchangeTool component - Fetches and displays currency exchange rates and conversions.
+ */
 const CurrencyExchangeTool = () => {
   const {toastMessage} = useContext(UserContext);
   const [amount, setAmount] = useState('');
@@ -238,6 +251,9 @@ const CurrencyExchangeTool = () => {
   const [convertedAmount, setConvertedAmount] = useState(null);
   const apiKey = import.meta.env.VITE_API_EXCHANGERATE
 
+  /**
+   * Fetch the exchange rate and calculate the converted amount.
+   */
   const fetchExchangeRate = async () => {
     console.log(fromCurrency, toCurrency, amount)
     try {
@@ -315,6 +331,9 @@ const CurrencyExchangeTool = () => {
   );
 };
 
+/**
+ * RepaymentStrategies component - Calculates debt repayment plans and total interest.
+ */
 const RepaymentStrategies = () => {
   const {toastMessage} = useContext(UserContext);
   const [debtAmount, setDebtAmount] = useState('');
@@ -323,6 +342,9 @@ const RepaymentStrategies = () => {
   const [repaymentDuration, setRepaymentDuration] = useState('');
   const [repaymentPlan, setRepaymentPlan] = useState(null);
 
+  /**
+   * Calculate the repayment plan based on user input.
+   */
   const calculateRepaymentPlan = () => {
     const principal = parseFloat(debtAmount);
     const annualRate = parseFloat(interestRate) / 100;

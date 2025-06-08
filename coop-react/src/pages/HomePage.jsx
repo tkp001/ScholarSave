@@ -1,21 +1,17 @@
 import React, { useContext, useEffect, useState, useRef, use } from 'react'; 
 import UserContext from '../UserContext';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
 import { GoogleGenAI } from "@google/genai";
-import { Bar, Pie } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import 'chart.js/auto'; // MUST INCLUDE TO DESTROY UPON UNMOUNTING
-import AccountViewer from '../components/AccountViewer';
-import jsPDF from "jspdf";
-import { PulseLoader } from "react-spinners";
-import ReactMarkdown from 'react-markdown';
 import { toast } from 'react-toastify';
-
-// import { Chart } from 'chart.js/auto';
-
-// Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+import 'chart.js/auto';
+import jsPDF from 'jspdf';
+import ExportSummaries from '../components/HomePage/ExportSummaries';
+import AiInsights from '../components/HomePage/AiInsights';
+import MonthlyBalanceChart from '../components/HomePage/MonthlyBalanceChart';
+import MonthlyBalanceChangeChart from '../components/HomePage/MonthlyBalanceChangeChart';
+import TopSpendingChart from '../components/HomePage/TopSpendingChart';
+import TopIncomeChart from '../components/HomePage/TopIncomeChart';
+import CategoryChangeChart from '../components/HomePage/CategoryChangeChart';
+import AccountViewer from '../components/AccountViewer';
 
 const HomePage = () => {
   const { user } = useContext(UserContext);
@@ -30,6 +26,11 @@ const HomePage = () => {
   const api = import.meta.env.VITE_API_GOOGLE_GENAI
   const ai = new GoogleGenAI({ apiKey: api });
 
+  /**
+   * Calculate the monthly balance change for the given account data.
+   * @param {Object} accountData - The account object containing category breakdowns.
+   * @returns {Array} Array of objects with month and total change.
+   */
   // Monthly balance
   function getMonthlyBalanceChange(accountData) {
     if (!accountData || !accountData.categoryBreakdown || !accountData.categoryBreakdown[2025]) {
@@ -43,6 +44,12 @@ const HomePage = () => {
     });
   }
 
+  /**
+   * Calculate the running monthly balances for the given account data and initial balance.
+   * @param {Object} accountData - The account object containing category breakdowns.
+   * @param {number} [initialBalance=0] - The starting balance for the calculation.
+   * @returns {Array} Array of objects with month and cumulative balance.
+   */
   function getMonthlyBalances(accountData, initialBalance = 0) {
     if (!accountData || !accountData.categoryBreakdown || !accountData.categoryBreakdown[2025]) {
       return [];
@@ -66,6 +73,11 @@ const HomePage = () => {
     return monthlyBalances;
   }
 
+  /**
+   * Get the top 5 spending categories (most negative totals) for the account.
+   * @param {Object} accountData - The account object containing category breakdowns.
+   * @returns {Array} Array of [category, amount] pairs.
+   */
   // Top 5 category spending
   function getTop5CategorySpending(accountData) {
     if (!accountData || !accountData.categoryBreakdown || !accountData.categoryBreakdown[2025]) {
@@ -87,6 +99,11 @@ const HomePage = () => {
       .slice(0, 5);
   }
 
+  /**
+   * Get the top 5 income categories (most positive totals) for the account.
+   * @param {Object} accountData - The account object containing category breakdowns.
+   * @returns {Array} Array of [category, amount] pairs.
+   */
   // Top 5 category income
   function getTop5CategoryIncome(accountData) {
     if (!accountData || !accountData.categoryBreakdown || !accountData.categoryBreakdown[2025]) {
@@ -108,6 +125,11 @@ const HomePage = () => {
       .slice(0, 5);
   }
 
+  /**
+   * Generate category breakdown data for each month for charting.
+   * @param {Object} accountData - The account object containing category breakdowns.
+   * @returns {Object} Chart.js-compatible data object.
+   */
   // Category amounts per month
   function getCategoryAmountsPerMonth(accountData) {
     if (!accountData || !accountData.categoryBreakdown || !accountData.categoryBreakdown[2025]) {
@@ -136,6 +158,10 @@ const HomePage = () => {
     return { labels, datasets };
   }
   
+  /**
+   * Generate a random hex color string.
+   * @returns {string} A random color in hex format.
+   */
   // Helper function to generate random colors, internet function
   function getRandomColor() {
     const letters = '0123456789ABCDEF';
@@ -145,8 +171,6 @@ const HomePage = () => {
     }
     return color;
   }
-
-  
 
   // Prepare data, provide for charts
   const monthlyBalance = viewedAccount ? getMonthlyBalanceChange(viewedAccount) : [];
@@ -240,6 +264,10 @@ const HomePage = () => {
     },
   }
 
+  /**
+   * Fetch AI-generated insights for the given account data and update state.
+   * @param {Object} accountData - The account data to send to the AI model.
+   */
   async function getAIInsights(accountData) {
     // Format the data into a readable string for AI
     const formattedData = `
@@ -272,6 +300,10 @@ const HomePage = () => {
   const [aiAnswer, setAiAnswer] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
 
+  /**
+   * Ask a finance-related question to the AI model using user/account data.
+   * Updates aiAnswer and aiLoading state.
+   */
   async function askAiQuestion() {
     if (!aiQuestion.trim()) return;
     setAiLoading(true);
@@ -291,6 +323,10 @@ const HomePage = () => {
     setAiLoading(false);
   }
 
+  /**
+   * Format user/account data for AI queries and insights.
+   * @returns {string} Formatted user data string.
+   */
   function getFormattedUserData() {
     return `
       Monthly Balance: ${JSON.stringify(monthlyBalance, null, 2)}
@@ -301,12 +337,19 @@ const HomePage = () => {
     `;
   }
 
+  /**
+   * Fetch AI insights when all data is prepared.
+   * 
+   */
   useEffect(() => {
     // Check if all required data is available
     setAiInsight(null); // Reset when account changes
     setAnimateKey((prevKey) => prevKey + 1);
+    if (!viewedAccount) {
+      setAiInsight(null);
+      return;
+    }
     if (
-      viewedAccount &&
       monthlyBalance.length > 0 &&
       (top5Income.length > 0 ||
       top5Spending.length > 0) &&
@@ -327,6 +370,10 @@ const HomePage = () => {
     }
   }, [viewedAccount]);
 
+  /**
+   * Export account summaries and insights to a PDF file.
+   * Uses jsPDF to generate and download the file.
+   */
   function exportSummariesToPDF() {
     const doc = new jsPDF();
 
@@ -383,125 +430,25 @@ const HomePage = () => {
 
         {viewedAccount && (
           <div
-            key={animateKey} // Use the animation key to re-render the div
+            key={animateKey}
             className="flex flex-col stagger-container"
           > 
-              <div className="flex flex-col items-center bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5 fade-in scale-on-hover">
-                <div className="text-xl mb-2">Export Summaries</div>
-                {aiInsight && (
-                  <div className='fade-in'>
-                    <button
-                      className="bg-blue-500 w-180 text-white font-bold py-2 px-4 rounded scale-on-hover"
-                      onClick={exportSummariesToPDF}
-                    >
-                      Export as PDF
-                    </button>
-                  </div>
-                )}
-                <PulseLoader
-                  className='my-2 fade-in'
-                  color={"white"}
-                  loading={!aiInsight}
-                  size={15}
-                />
-              </div>
-
-              <div className="rounded-3xl flex flex-col bg-gray-700 w-200 h-fit my-2 py-5 p-3 fade-in">
-                <div className="text-xl">ScholarSave Insights AI</div>
-                <div className='italic text-sm font-bold my-2'>Disclaimer: AI is not a financial advisor.</div>
-                {aiInsight && (
-                  <div className="fade-in">{aiInsight}</div>
-                )}
-                <PulseLoader
-                  className='justify-center my-2 fade-in'
-                  color={"white"}
-                  loading={!aiInsight}
-                  size={15}
-                />
-
-                {aiInsight && (
-                  <div className="flex flex-row my-3 fade-in">
-                  <input
-                    className="border-2 border-gray-500 rounded-xl p-2 w-full mr-2"
-                    type="text"
-                    placeholder="Ask a finance question..."
-                    value={aiQuestion}
-                    onChange={e => setAiQuestion(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') askAiQuestion(); }}
-                  />
-                  <button
-                    className="bg-blue-500 text-white rounded-xl px-4 py-2 scale-on-hover"
-                    onClick={askAiQuestion}
-                    disabled={aiLoading}
-                  >
-                      Ask
-                  </button>
-                </div>
-                )}
-                {aiLoading && (
-                  <PulseLoader
-                    className='justify-center my-2 fade-in'
-                    color={"white"}
-                    loading={aiLoading}
-                    size={15}
-                  />
-                )}
-                {aiQuestion && aiAnswer && (
-                  <div className="fade-in">
-                    <div className="font-bold">Question:</div>
-                    <div className="mb-2">{aiQuestion}</div>
-                    <div className="font-bold">Answer:</div>
-                    <div><ReactMarkdown>{aiAnswer}</ReactMarkdown></div>
-                  </div>
-                )}
-            </div>
-
-            <div className="flex flex-col bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5 fade-in">
-              <div className="text-xl mb-2">Monthly Balance</div>
-              {BDMonthlyBalances.datasets[0].data.length > 0 ? (
-                <Bar data={BDMonthlyBalances} options={BOMonthlyBalanceChange} />
-              ) : (
-                <div className="text-center text-gray-400">No data available</div>
-              )}
-            </div>
-
-            <div className="flex flex-col bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5 fade-in">
-              <div className="text-xl mb-2">Monthly Balance Change</div>
-              {BDMonthlyBalanceChange.datasets[0].data.length > 0 ? (
-                <Bar data={BDMonthlyBalanceChange} options={BOMonthlyBalanceChange} />
-              ) : (
-                <div className="text-center text-gray-400">No data available</div>
-              )}
-            </div>
-
+            <ExportSummaries aiInsight={aiInsight} exportSummariesToPDF={exportSummariesToPDF} />
+            <AiInsights
+              aiInsight={aiInsight}
+              aiQuestion={aiQuestion}
+              setAiQuestion={setAiQuestion}
+              askAiQuestion={askAiQuestion}
+              aiLoading={aiLoading}
+              aiAnswer={aiAnswer}
+            />
+            <MonthlyBalanceChart BDMonthlyBalances={BDMonthlyBalances} BOMonthlyBalanceChange={BOMonthlyBalanceChange} />
+            <MonthlyBalanceChangeChart BDMonthlyBalanceChange={BDMonthlyBalanceChange} BOMonthlyBalanceChange={BOMonthlyBalanceChange} />
             <div className="flex flex-row my-2">
-              <div className="flex flex-col bg-gray-700 w-99 h-fit rounded-3xl mr-2 p-5 fade-in">
-                <div className="text-xl mb-2">Top 5 Spending</div>
-                {top5Spending.length > 0 ? (
-                  <Pie data={spendingData} />
-                ) : (
-                  <div className="text-center text-gray-400">No data available</div>
-                )}
-              </div>
-
-              <div className="flex flex-col bg-gray-700 w-99 h-fit rounded-3xl p-5 fade-in">
-                <div className="text-xl mb-2">Top 5 Income</div>
-                {top5Income.length > 0 ? (
-                  <Pie data={incomeData} />
-                ) : (
-                  <div className="text-center text-gray-400">No data available</div>
-                )}
-              </div>
+              <TopSpendingChart top5Spending={top5Spending} spendingData={spendingData} />
+              <TopIncomeChart top5Income={top5Income} incomeData={incomeData} />
             </div>
-
-            <div className="flex flex-col bg-gray-700 w-200 h-fit rounded-3xl my-2 p-5 fade-in">
-              <div className="text-xl mb-2">Category Change Per Month</div>
-              {categoryChangeData.labels.length > 0 ? (
-                <Bar data={categoryChangeData} options={BOcategoryChangeData} />
-              ) : (
-                <div className="text-center text-gray-400">No data available</div>
-              )}
-            </div>
+            <CategoryChangeChart categoryChangeData={categoryChangeData} BOcategoryChangeData={BOcategoryChangeData} />
           </div>
         )}
       </div>

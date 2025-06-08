@@ -19,6 +19,9 @@ const AuthPage = () => {
   const [emailLinkSent, setEmailLinkSent] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
 
+  /**
+   * Sign out the current user and handle errors.
+   */
   function authSignout() {
     signOut(auth).then(() => {
       console.log("Signed out successfully");
@@ -28,6 +31,9 @@ const AuthPage = () => {
     });
   }
 
+  /**
+   * Register a new user with email and password, send verification email, and handle errors.
+   */
   function authSignupPassword() {
     setAuthErrorMessage(null);
     createUserWithEmailAndPassword(auth, email, password)
@@ -50,6 +56,9 @@ const AuthPage = () => {
       });
   }
 
+  /**
+   * Sign in a user with email and password and handle errors.
+   */
   function authSigninPassword() {
     setAuthErrorMessage(null);
     signInWithEmailAndPassword(auth, email, password)
@@ -62,6 +71,9 @@ const AuthPage = () => {
       });
   }
 
+  /**
+   * Sign in a user with Google popup and handle errors.
+   */
   function authGoogleSigninPopup() {
     setAuthErrorMessage(null);
     signInWithPopup(auth, provider)
@@ -74,6 +86,11 @@ const AuthPage = () => {
       });
   }
 
+  /**
+   * Set the authentication error message based on error code and message.
+   * @param {string} code - The error code from Firebase Auth.
+   * @param {string} message - The error message from Firebase Auth.
+   */
   function setAuthMessage(code, message) {
     switch (code) {
       case 'auth/invalid-email':
@@ -101,6 +118,9 @@ const AuthPage = () => {
     }
   }
 
+  /**
+   * Send a sign-in link to the user's email for email link authentication.
+   */
   function sendEmailLink() {
     setAuthErrorMessage(null);
     const actionCodeSettings = {
@@ -118,6 +138,9 @@ const AuthPage = () => {
       });
   }
 
+  /**
+   * Check for email link sign-in on mount and handle sign-in if present.
+   */
   useEffect(() => {
     console.log("Checking for email link sign-in...");
     if (isSignInWithEmailLink(auth, window.location.href)) {
@@ -138,6 +161,9 @@ const AuthPage = () => {
     }
   }, [auth, setUser]);
 
+  /**
+   * Send a password reset email to the user and handle errors.
+   */
   function handlePasswordReset() {
     setAuthErrorMessage(null);
     sendPasswordResetEmail(auth, email)

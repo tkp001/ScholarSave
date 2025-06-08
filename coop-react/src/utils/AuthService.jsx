@@ -10,6 +10,12 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth'
 import { PulseLoader } from 'react-spinners';
 
 
+/**
+ * AuthService component for handling authentication state and route protection.
+ * Wraps children with authentication logic and redirects based on user state.
+ * @param {object} props - The component props.
+ * @param {React.ReactNode} props.children - The child components to render when authenticated.
+ */
 const AuthService = ({children}) => {
     const auth = getAuth();
     const location = useLocation();
@@ -18,6 +24,10 @@ const AuthService = ({children}) => {
     const { user, updateUser } = useContext(UserContext);
     const [loading, setLoading] = useState(true);
 
+    /**
+     * Delay execution for a specified number of milliseconds.
+     * @param {number} ms - The number of milliseconds to delay.
+     */
     const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
     useEffect(() => {

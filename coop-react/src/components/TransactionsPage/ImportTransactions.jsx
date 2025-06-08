@@ -1,6 +1,5 @@
 import React, { useState, useContext } from "react";
-import UserContext from "../UserContext";
-import "../App.css";
+import UserContext from "../../UserContext";
 import { useDropzone } from "react-dropzone";
 import csv from "csvtojson";
 import { GoogleGenAI } from "@google/genai";

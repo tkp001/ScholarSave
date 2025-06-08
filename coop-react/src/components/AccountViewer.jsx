@@ -16,12 +16,17 @@ const AccountViewer = () => {
   
     
       
-  // Fetch accounts on component mount
+  /**
+   * Fetches accounts from Firestore for the current user and updates the context state.
+   */
   useEffect(() => {
     fetchAccounts();
   }, []);
     
-  // Handle account selection
+  /**
+   * Handle account selection from the dropdown and update the viewed account.
+   * @param {object} e - The change event from the select input.
+   */
   function changeViewedAccount(e) {
       const selectedAccountId = e.target.value;
       const selectedAccount = accounts.find((account) => account.id === selectedAccountId);

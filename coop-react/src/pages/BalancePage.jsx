@@ -27,6 +27,9 @@ const BalancePage = () => {
     last_transaction: "N/A",
   });
 
+  /**
+   * Resets the account form to its initial state and toggles the new account form visibility.
+   */
   function resetAccountForm() {
     setNewAccount(!newAccount)
     setAccountForm({
@@ -42,55 +45,10 @@ const BalancePage = () => {
 
   const [animateKey, setAnimateKey] = useState(0); // State to trigger animation
 
-  // function toastMessage(message, type) {
-  //   if (type === "error") {
-  //     toast.error(message, {
-  //       position: "top-right",
-  //       autoClose: 5000,
-  //       hideProgressBar: false,
-  //       closeOnClick: false,
-  //       pauseOnHover: true,
-  //       draggable: false,
-  //       progress: undefined,
-  //       theme: "colored",
-  //     });
-  //   } else if (type === "success") {
-  //     toast.success(message, {
-  //       position: "top-right",
-  //       autoClose: 5000,
-  //       hideProgressBar: false,
-  //       closeOnClick: false,
-  //       pauseOnHover: true,
-  //       draggable: false,
-  //       progress: undefined,
-  //       theme: "colored",
-
-  //     });
-  //   } else if (type === "warning") {
-  //     toast.warn(message, {
-  //       position: "top-right",
-  //       autoClose: 5000,
-  //       hideProgressBar: false,
-  //       closeOnClick: false,
-  //       pauseOnHover: true,
-  //       draggable: false,
-  //       progress: undefined,
-  //       theme: "colored",
-  //     });
-  //   } else {
-  //     toast(message, {
-  //       position: "top-right",
-  //       autoClose: 5000,
-  //       hideProgressBar: false,
-  //       closeOnClick: false,
-  //       pauseOnHover: true,
-  //       draggable: false,
-  //       progress: undefined,
-  //       theme: "colored",
-  //     });
-  //   }
-  // }
-
+  /**
+   * Fetches the details of the last transaction for the given transaction ID.
+   * @param {string} transactionId - The ID of the transaction to fetch.
+   */
   async function fetchLastTransaction(transactionId) {
     if (!transactionId || transactionId === "N/A") {
       setLastTransactionDetails(null);
@@ -114,6 +72,9 @@ const BalancePage = () => {
     }
   }
 
+  /**
+   * Fetch last transaction details and trigger animation when viewedAccount changes.
+   */
   useEffect(() => {
     if (viewedAccount) {
       fetchLastTransaction(viewedAccount.last_transaction);
@@ -121,6 +82,10 @@ const BalancePage = () => {
     }
   }, [viewedAccount]);
 
+  /**
+   * Handles changes to the account form input fields.
+   * @param {object} e - The input change event.
+   */
   const handleAccountForm = (e) => {
     const { name, value } = e.target;
     setAccountForm((prevFormData) => ({
@@ -129,6 +94,9 @@ const BalancePage = () => {
     }));
   };
 
+  /**
+   * Adds a new account to the database using the current form data.
+   */
   const addNewAccount = async () => {
     if (!accountForm.nickname || !accountForm.account_number || accountForm.balance === "") {
       toastMessage("All fields are required", "warning");
@@ -146,6 +114,9 @@ const BalancePage = () => {
     }
   };
 
+  /**
+   * Deletes the currently viewed account after user confirmation.
+   */
   const deleteAccount = async () => {
     const confirmDelete = window.confirm(
       `Are you sure you want to delete the account "${viewedAccount.account_number}"? This action cannot be undone.`
@@ -169,7 +140,7 @@ const BalancePage = () => {
     <div className="flex flex-row flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white">
       <div className="flex flex-col flex-grow p-10">
         <AccountViewer />
-
+        
         <div className='flex flex-row max-w-200'>
           {viewedAccount ? (
             <div
@@ -196,8 +167,8 @@ const BalancePage = () => {
                 <div className="text-2xl mb-10 fade-in">No transaction details available.</div>
               )}
             </div>
-          ) : (
-            <div className="flex flex-grow text-xl my-2 mb-5 fade-in">Please select an account to view details.</div>
+          ) : (   
+            <div className="flex text-xl my-2 mb-5 fade-in">Please select an account to view details.</div>
           )}
 
           <div className="flex flex-col max-w-100 min-w-60 w-100 p-4 h-full stagger-container">
@@ -210,7 +181,7 @@ const BalancePage = () => {
             </div>
           ))}
         </div>
-        
+      
       </div>
 
         {viewedAccount && (

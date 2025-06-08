@@ -18,10 +18,6 @@ import SettingsPage from './pages/SettingsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import AuthPage from './pages/AuthPage';
 
-
-
-
-
 function App() {
 
   const [user, setUser] = useState(null);
@@ -54,6 +50,10 @@ function App() {
   //     });
   // }
 
+  /**
+   * Fetch all accounts for the current user from Firestore and update state.
+   * Updates the viewed account if it is invalid or stale.
+   */
   function fetchAccounts() {
     const accountsRef = collection(db, "accounts");
     const q = query(accountsRef, where("user_id", "==", user.uid));
@@ -87,18 +87,35 @@ function App() {
       });
   }
   
+  /**
+   * Update the user state in context.
+   * @param {object|null} newUser - The new user object or null if signed out.
+   */
   function updateUser(newUser) {
     setUser(newUser)
   }
 
+  /**
+   * Update the currently viewed account in context.
+   * @param {object|null} newAccount - The new account object or null.
+   */
   function updateViewedAccount(newAccount) {
     setViewedAccount(newAccount)
   }
 
+  /**
+   * Update the accounts array in context.
+   * @param {Array} newAccounts - The new array of account objects.
+   */
   function updateAccounts(newAccounts) {
     setAccounts(newAccounts)
   }
 
+  /**
+   * Show a toast notification with the given message and type.
+   * @param {string} message - The message to display.
+   * @param {string} type - The type of notification ("error", "success", "warning", or other).
+   */
   function toastMessage(message, type) {
       if (type === "error") {
         toast.error(message, {

@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../App.css';
 import { db } from '../firebaseConfig';
 import { Timestamp, collection, getDocs, getDoc, doc, deleteDoc, updateDoc, addDoc, query, where, orderBy,writeBatch } from 'firebase/firestore';
@@ -6,9 +6,10 @@ import UserContext from '../UserContext';
 import { useContext } from 'react';
 import TransactionList from '../components/TransactionList';
 import AccountViewer from '../components/AccountViewer';
-import ImportTransactions from '../components/ImportTransactions';
+import ImportTransactions from '../components/TransactionsPage/ImportTransactions';
 import { toast } from 'react-toastify';
-
+import TransactionForm from '../components/TransactionsPage/TransactionForm';
+import TransferForm from '../components/TransactionsPage/TransferForm';
 
 const TransactionsPage = () => {
   const { user } = useContext(UserContext);
@@ -51,6 +52,9 @@ const TransactionsPage = () => {
     currency: "",
   });
 
+  /**
+   * Reset the transaction form to its initial state and toggle the addTransaction modal.
+   */
   function resetTransactionForm() {
     setAddTransaction(!addTransaction);
     setTransactionForm({
@@ -75,6 +79,9 @@ const TransactionsPage = () => {
     date: "",
   });
 
+  /**
+   * Reset the transfer form to its initial state and toggle the transferMoney modal.
+   */
   function resetTransferForm() {
     setTransferMoney(!transferMoney);
     setTransferForm({
@@ -88,6 +95,10 @@ const TransactionsPage = () => {
 
   const transactionsRef = collection(db, "transactions");
   
+  /**
+   * Fetch transactions for the current user and viewed account, applying filters as needed.
+   * Updates the transactions state with the results.
+   */
   async function fetchTransactions() {
     try {
       let q = query(
@@ -96,6 +107,18 @@ const TransactionsPage = () => {
         where("account_number", "==", viewedAccount.account_number),
         where("type", "==", filterTransactions.type)
       );
+
+      // Amount Filter
+
+      if (filterTransactions.amountMin !== "") {
+        q = query(q, where("amount", ">=", parseFloat(filterTransactions.amountMin)));
+      
+        if (filterTransactions.amountMax !== "") {
+          q = query(q, where("amount", "<=", parseFloat(filterTransactions.amountMax)));
+        }
+        q = query(q, orderBy("amount", filterTransactions.filterOrder));
+      }
+      
   
       // Apply date filter
       if (filterTransactions.filter === "Date" && filterTransactions.date) {
@@ -146,6 +169,11 @@ const TransactionsPage = () => {
     }
   }
 
+  /**
+   * Handle changes to the transaction filter form.
+   * Updates filterTransactions state.
+   * @param {Object} e - The event object from the input change.
+   */
   const handleFilterTransaction = (e) => {
     const { name, value } = e.target;
     setFilterTransactions((prevFormData) => ({
@@ -156,6 +184,11 @@ const TransactionsPage = () => {
     console.log("filterTransactions", filterTransactions);
   };
 
+  /**
+   * Handle changes to the transaction form (add/edit).
+   * Updates transactionForm state.
+   * @param {Object} e - The event object from the input change.
+   */
   const handleTransactionForm = (e) => {
     const { name, value } = e.target;
 
@@ -198,6 +231,11 @@ const TransactionsPage = () => {
     console.log("transactionForm", transactionForm);
   };
   
+  /**
+   * Handle changes to the transfer form.
+   * Updates transferForm state.
+   * @param {Object} e - The event object from the input change.
+   */
   const handleTransferForm = (e) => {
     const { name, value } = e.target;
   
@@ -225,6 +263,13 @@ const TransactionsPage = () => {
     console.log("transferForm", transferForm);
   };
 
+  /**
+   * Updates the balance of an account by a given amount and records the last transaction.
+   * Fetches the latest account data, calculates the new balance, and updates Firestore.
+   * @param {number|string} amount - The amount to change (positive for deposit, negative for withdrawal).
+   * @param {string} accountId - The Firestore document ID of the account.
+   * @param {string} transactionDocRef - The Firestore document ID of the related transaction (optional).
+   */
   async function changeAccountBalance(amount, accountId, transactionDocRef = "N/A") {
     fetchAccounts();
     const accountDocRef = doc(db, "accounts", accountId);
@@ -259,6 +304,10 @@ const TransactionsPage = () => {
     fetchTransactions();
   }
 
+  /**
+   * Handle transferring money between two accounts.
+   * Validates input, creates transfer transactions, updates balances and category breakdowns.
+   */
   async function handleTransferMoney() {
     const { sourceAccount, destinationAccount, amount, date } = transferForm;
   
@@ -352,6 +401,10 @@ const TransactionsPage = () => {
     }
   }
 
+  /**
+   * Handle adding a new transaction for the viewed account.
+   * Validates input, creates transaction, updates balance and category breakdown.
+   */
   async function handleAddTransaction() {
     const { name, category, date, amount } = transactionForm;
   
@@ -388,6 +441,11 @@ const TransactionsPage = () => {
     }
   }
 
+  /**
+   * Handle deleting a transaction by ID.
+   * Reverses the transaction's effect on balance and category breakdown.
+   * @param {string} id - The Firestore document ID of the transaction to delete.
+   */
   async function handleDeleteTransaction(id) {
     // const confirmDelete = window.confirm("Are you sure you want to delete this transaction?");
   
@@ -426,6 +484,9 @@ const TransactionsPage = () => {
     }
   }
 
+  /**
+   * Fetch the last transaction for the viewed account.
+   */
   useEffect(() => {
     if (viewedAccount){
       fetchTransactions();
@@ -434,6 +495,13 @@ const TransactionsPage = () => {
 
   // Stats and Advanced Account Updates
 
+  /**
+   * Update the category breakdown for an account for a given year/month/category.
+   * @param {string} accountId - The Firestore account document ID.
+   * @param {string} category - The transaction category.
+   * @param {number|string} amount - The amount to add/subtract.
+   * @param {string|Date} date - The transaction date.
+   */
   async function updateCategoryBreakdown(accountId, category, amount, date) {
     const accountDocRef = doc(db, "accounts", accountId);
   
@@ -470,7 +538,13 @@ const TransactionsPage = () => {
     await updateDoc(accountDocRef, { categoryBreakdown });
   }
 
-  // Extra function
+  /**
+   * Fetch the category breakdown for a specific account, year, and month.
+   * @param {string} accountId - The Firestore account document ID.
+   * @param {string} year - The year (e.g., "2025").
+   * @param {string} month - The month (e.g., "04").
+   * @returns {Promise<Object>} - The category breakdown object for the month.
+   */
   async function fetchCategoryBreakdown(accountId, year, month) {
     const accountDocRef = doc(db, "accounts", accountId);
   
@@ -494,7 +568,11 @@ const TransactionsPage = () => {
     // console.log(breakdown);
   }
   
-  // Get the categories for month (for dropdown, makes UI easier)
+  /**
+   * Get the list of categories for the selected date in the transaction form.
+   * Used for populating category dropdowns.
+   * @returns {string[]} - Array of category names.
+   */
   function getCategoriesForSelectedDate() {
     const { date } = transactionForm;
     const dateFormatted = new Date(date);
@@ -510,6 +588,11 @@ const TransactionsPage = () => {
   }
 
   // AI Import Transactions
+  /**
+   * Import a batch of corrected transactions (e.g., from AI or CSV import).
+   * Adds transactions in batch, updates account data, and sets last transaction info.
+   * @param {Array|Object} transactionData - Array of transaction objects or wrapped data.
+   */
   async function importCorrectedTransactions(transactionData) {
     console.log("Importing corrected transactions...");
     console.log("transactions", transactionData);
@@ -591,6 +674,11 @@ const TransactionsPage = () => {
     }
   }
 
+  /**
+   * Recalculate the account's total balance and category breakdown from all transactions.
+   * Updates the account document in Firestore.
+   * @param {string} accountId - The Firestore account document ID.
+   */
   async function recalculateAccountData(accountId) {
     try {
       console.log("Recalculating account data...");
@@ -693,186 +781,23 @@ const TransactionsPage = () => {
 
           <div className='flex flex-row'>
             {addTransaction && (
-                <div className="bg-gray-700 p-5 w-100 h-115 rounded-xl mr-4 fade-in">
-                  <h3 className="text-2xl mb-3">Add New Transaction</h3>
-                  {/* <select
-                    className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
-                    name="type"
-                    value={transactionForm.type}
-                    onChange={handleTransactionForm}
-                  >
-                    <option value="Deposit">Deposit</option>
-                    <option value="Withdrawl">Withdrawl</option>
-                  </select> */}
-                  <input
-                    className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
-                    type="text"
-                    name="name"
-                    value={transactionForm.name}
-                    placeholder="Transaction Name"
-                    onChange={handleTransactionForm}
-                  />
-                  <input
-                    className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
-                    type="date"
-                    name="date"
-                    // value={transactionForm.date}
-                    onChange={handleTransactionForm}
-                  />
-                  <select
-                    className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
-                    name="category"
-                    value={transactionForm.category}
-                    onChange={handleTransactionForm}
-                  >
-                    <option value="Custom Category">Custom Category</option>
-                    <option value="" disabled>
-                    --Default Categories--
-                    </option>
-                    <option value="Salary/Income">Salary/Income</option>
-                    <option value="Groceries">Groceries</option>
-                    <option value="Rent/Mortgage">Rent/Mortgage</option>
-                    <option value="Transportation">Transportation</option>
-                    <option value="Dining/Restaurant">Dining/Restaurant</option>
-                    <option value="Utilities">Utilities</option>
-                    <option value="Shopping">Shopping</option>
-                    <option value="Entertainment">Entertainment</option>
-                    <option value="Health & Fitness">Health & Fitness</option>
-                    <option value="Loan/Credit Payments">Loan/Credit Payments</option>
-                    <option value="Investment">Investment</option>
-
-                    <option value="" disabled>
-                    --Categories This Month--
-                    </option>
-                    {/* !Change how custom category is handled as these are seen as regular, instead compare category to default categories list IN ADDITION. */}
-                    {getCategoriesForSelectedDate().map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                  {transactionForm.customCategory && (
-                    <input
-                      className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
-                      type="text"
-                      name="customCategory"
-                      value={transactionForm.category || ""}
-                      placeholder="Enter Custom Category"
-                      //update customCategory
-                      onChange={(e) =>
-                        setTransactionForm((prevFormData) => ({
-                          ...prevFormData,
-                          category: e.target.value,
-                        }))
-                      }
-                    />
-                  )}
-                  
-                  <input
-                    className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
-                    type="number"
-                    name="amount"
-                    value={transactionForm.amount}
-                    placeholder="Amount"
-                    onChange={handleTransactionForm}
-                  />
-                  
-                  <p className="text-md my-2">+ for Deposit</p>
-                  <p className="text-md my-2">- for Withdrawl</p>
-                  <p className="text-md my-2">You are performing "{transactionForm.type}"</p>
-
-                  <button
-                    className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 mr-3 scale-on-hover"
-                    onClick={handleAddTransaction}
-                  >
-                    Save Transaction
-                  </button>
-                  <button
-                    className="w-fit h-8 bg-red-600 rounded-4xl px-2 my-5 scale-on-hover"
-                    onClick={resetTransactionForm}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
-
+              <TransactionForm
+                transactionForm={transactionForm}
+                handleTransactionForm={handleTransactionForm}
+                handleAddTransaction={handleAddTransaction}
+                resetTransactionForm={resetTransactionForm}
+                getCategoriesForSelectedDate={getCategoriesForSelectedDate}
+              />
+            )}
             {transferMoney && (
-              <div className="bg-gray-700 p-5 w-100 h-100 rounded-xl fade-in">
-                <h3 className="text-2xl mb-3">Transfer Money</h3>
-                <div className='w-full text-md text-center my-1 font-bold'>From</div>
-                <select
-                  className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
-                  name="sourceAccount"
-                  value={transferForm.sourceAccount}
-                  onChange={handleTransferForm}
-                >
-                  <option value="" disabled>
-                    Select Source Account
-                  </option>
-                  {accounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.nickname} - {account.account_number} - ${account.balance}
-                    </option>
-                  ))}
-                </select>
-                {/* <select
-                  className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
-                  name="type"
-                  value={transferForm.type}
-                  onChange={handleTransferForm}
-                >
-                  <option value="Deposit">Deposit</option>
-                  <option value="Withdrawl">Withdrawl</option>
-                </select> */}
-                {/* <div>{transferForm.type}</div> */}
-                <div className='w-full text-md text-center my-1 font-bold'>Deposit To</div>
-                <select
-                  className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
-                  name="destinationAccount"
-                  value={transferForm.destinationAccount}
-                  onChange={handleTransferForm}
-                >
-                  <option value="" disabled>
-                    Select Destination Account
-                  </option>
-                  {accounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.nickname} - {account.account_number} - ${account.balance}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
-                  type="date"
-                  name="date"
-                  value={transferForm.date}
-                  onChange={handleTransferForm}
-                />
-                <input
-                  className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
-                  type="number"
-                  name="amount"
-                  value={transferForm.amount}
-                  placeholder="Amount"
-                  onChange={handleTransferForm}
-                />
-                
-                <button
-                  className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 mr-3 scale-on-hover"
-                  onClick={handleTransferMoney}
-                >
-                  Transfer Money
-                </button>
-
-                <button
-                    className="w-fit h-8 bg-red-600 rounded-4xl px-2 my-5 scale-on-hover"
-                    onClick={resetTransferForm}
-                  >
-                    Cancel
-                  </button>
-              </div>
-              )}
-
+              <TransferForm
+                transferForm={transferForm}
+                handleTransferForm={handleTransferForm}
+                handleTransferMoney={handleTransferMoney}
+                resetTransferForm={resetTransferForm}
+                accounts={accounts}
+              />
+            )}
           </div>
 
           

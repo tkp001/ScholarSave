@@ -9,6 +9,10 @@ import BudgetWidget from '../components/BudgetWidget';
 import SavingWidget from '../components/SavingWidget';
 import AccountViewer from '../components/AccountViewer';
 import { toast } from 'react-toastify';
+import BudgetForm from '../components/AllowancePage/BudgetForm';
+import SavingForm from '../components/AllowancePage/SavingForm';
+import BudgetList from '../components/AllowancePage/BudgetList';
+import SavingList from '../components/AllowancePage/SavingList';
 
 const AllowancePage = () => {
   const { user } = useContext(UserContext);
@@ -29,6 +33,9 @@ const AllowancePage = () => {
     user_id: user.uid,
   });
 
+  /**
+   * Reset the budget form to its initial state and toggle the addBudget modal.
+   */
   function resetBudgetForm() {
     setAddBudget(!addBudget);
     setBudgetForm({
@@ -44,6 +51,10 @@ const AllowancePage = () => {
 
   const [availableCategories, setAvailableCategories] = useState([]);
 
+  /**
+   * Handle changes to the budget form fields and update available categories if dates change.
+   * @param {Object} e - The event object from the input change.
+   */
   const handleBudgetForm = (e) => {
     const { name, value } = e.target;
     setBudgetForm((prevFormData) => {
@@ -67,6 +78,12 @@ const AllowancePage = () => {
     });
   };
 
+  /**
+   * Get all categories present in the account breakdown within a date range.
+   * @param {Date} startDate - The start date of the range.
+   * @param {Date} endDate - The end date of the range.
+   * @returns {string[]} Array of category names.
+   */
   function getCategoriesWithinDateRange(startDate, endDate) {
     if (!viewedAccount?.categoryBreakdown) return [];
   
@@ -89,7 +106,11 @@ const AllowancePage = () => {
     return categories;
   }
 
-  // Extra function
+  /**
+   * Get all available years and months from the category breakdown.
+   * @param {Object} categoryBreakdown - The account's category breakdown object.
+   * @returns {Object} Object with arrays of years and months.
+   */
   function getAvailableYearsAndMonths(categoryBreakdown) {
     if (!categoryBreakdown) return { years: [], months: [] };
   
@@ -102,6 +123,9 @@ const AllowancePage = () => {
     return { years, months };
   }
 
+  /**
+   * Add a new budget for the viewed account. Validates input and updates Firestore.
+   */
   async function handleAddBudget() {
   if (!budgetForm.name || !budgetForm.category || !budgetForm.amount || !budgetForm.startDate || !budgetForm.endDate) {
     toastMessage("Please fill out all fields.", "warning");
@@ -126,6 +150,9 @@ const AllowancePage = () => {
   }
 }
 
+  /**
+   * Fetch all budgets for the current user and viewed account from Firestore.
+   */
   async function fetchBudgets() {
     try {
       const budgetsRef = collection(db, "allowances");
@@ -151,6 +178,11 @@ const AllowancePage = () => {
     }
   }
 
+  /**
+   * Calculate the total spent and gains for a given budget.
+   * @param {Object} budget - The budget object.
+   * @returns {Object} Object with spent and gains values.
+   */
   function getSpentAmount(budget) {
     const { category, startDate, endDate } = budget;
   
@@ -182,6 +214,9 @@ const AllowancePage = () => {
     };
   }
 
+  /**
+   * Fetch budgets and savings when the viewed account changes.
+   */
   useEffect(() => {
     if (viewedAccount) {
       fetchBudgets();
@@ -190,6 +225,10 @@ const AllowancePage = () => {
     }
   }, [viewedAccount]);
 
+  /**
+   * Delete a budget by its Firestore document ID and refresh the list.
+   * @param {string} budgetId - The Firestore document ID of the budget.
+   */
   async function handleDeleteBudget(budgetId) {
     try {
       const budgetDocRef = doc(db, "allowances", budgetId);
@@ -204,6 +243,9 @@ const AllowancePage = () => {
     }
   }
 
+  /**
+   * Fetch all savings for the current user and viewed account from Firestore.
+   */
   async function fetchSavings() {
     try {
       const savingsRef = collection(db, "allowances");
@@ -233,7 +275,6 @@ const AllowancePage = () => {
 
 
   // Savings
-
   const [savings, setSavings] = useState([]);
   const [addSaving, setAddSaving] = useState(false);
   const [savingForm, setSavingForm] = useState({
@@ -247,6 +288,9 @@ const AllowancePage = () => {
     account_number: viewedAccount?.account_number,
   });
 
+  /**
+   * Reset the saving form to its initial state and toggle the addSaving modal.
+   */
   function resetSavingForm() {
     setAddSaving(!addSaving);
     setSavingForm({
@@ -261,6 +305,10 @@ const AllowancePage = () => {
     });
   }
 
+  /**
+   * Handle changes to the saving form fields.
+   * @param {Object} e - The event object from the input change.
+   */
   const handleSavingForm = (e) => {
     const { name, value } = e.target;
     setSavingForm((prevFormData) => ({
@@ -269,56 +317,9 @@ const AllowancePage = () => {
     }));
   };
 
-
-  // async function handleAddSaving() {
-  //   if (!savingForm.name || !savingForm.amount) {
-  //     alert("Please fill out all fields.");
-  //     return;
-  //   }
-  
-  //   try {
-  //     const savingsRef = collection(db, "allowances");
-  
-  //     // Add the saving to Firestore
-  //     await addDoc(savingsRef, {
-  //       ...savingForm,
-  //       account_number: viewedAccount.account_number,
-  //       category: savingForm.name,
-  //     });
-  
-  //     // Update the categoryBreakdown in the account document
-  //     const accountDocRef = doc(db, "accounts", viewedAccount.id);
-  //     const accountSnapshot = await getDoc(accountDocRef);
-  
-  //     if (accountSnapshot.exists()) {
-  //       const accountData = accountSnapshot.data();
-  //       const { year, month, name } = savingForm;
-  
-  //       // Initialize or update the categoryBreakdown
-  //       const categoryBreakdown = accountData.categoryBreakdown || {};
-  //       if (!categoryBreakdown[year]) {
-  //         categoryBreakdown[year] = {};
-  //       }
-  //       if (!categoryBreakdown[year][month]) {
-  //         categoryBreakdown[year][month] = {};
-  //       }
-  //       if (!categoryBreakdown[year][month][name]) {
-  //         categoryBreakdown[year][month][name] = 0; // Add 0 to the category
-  //       }
-  
-  //       // Update the account document in Firestore
-  //       await updateDoc(accountDocRef, { categoryBreakdown });
-  //     }
-  
-  //     alert("Saving added successfully!");
-  //     setAddSaving(false);
-  //     fetchSavings();
-  //   } catch (error) {
-  //     console.error("Error adding saving:", error);
-  //     alert("An error occurred while adding the saving.");
-  //   }
-  // }
-
+  /**
+   * Add a new saving for the viewed account. Validates input and updates Firestore.
+   */
   async function handleAddSaving() {
     if (!savingForm.name || !savingForm.amount || !savingForm.startDate || !savingForm.endDate) {
       toastMessage("Please fill out all fields.", "warning");
@@ -383,6 +384,11 @@ const AllowancePage = () => {
     }
   }
 
+  /**
+   * Calculate the total saved amount for a given saving goal.
+   * @param {Object} saving - The saving object.
+   * @returns {number} The total saved amount.
+   */
   function getSavedAmount(saving) {
     const { name: category, startDate, endDate } = saving;
   
@@ -424,6 +430,10 @@ const AllowancePage = () => {
     return totalSaved;
   }
 
+  /**
+   * Delete a saving by its Firestore document ID and refresh the list.
+   * @param {string} savingId - The Firestore document ID of the saving.
+   */
   async function handleDeleteSaving(savingId) {
     try {
       const savingDocRef = doc(db, "allowances", savingId); 
@@ -437,6 +447,12 @@ const AllowancePage = () => {
     }
   }
 
+  /**
+   * Get a reminder message for a budget based on time left and spending.
+   * @param {Object} budget - The budget object.
+   * @param {number} spentAmount - The amount spent so far.
+   * @returns {JSX.Element|null} Reminder message or null.
+   */
   function getBudgetReminder(budget, spentAmount) {
     const end = new Date(budget.endDate);
     const today = new Date();
@@ -450,18 +466,24 @@ const AllowancePage = () => {
     return null;
   }
 
-function getSavingReminder(saving, savedAmount) {
-  const end = new Date(saving.endDate);
-  const today = new Date();
-  const daysLeft = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
-  if (savedAmount < saving.amount && daysLeft <= 3 && daysLeft >= 0) {
-    return <div className="text-yellow-300 text-sm">⏰ Only {daysLeft} day(s) left to reach your saving goal!</div>;
+  /**
+   * Get a reminder message for a saving goal based on time left and progress.
+   * @param {Object} saving - The saving object.
+   * @param {number} savedAmount - The amount saved so far.
+   * @returns {JSX.Element|null} Reminder message or null.
+   */
+  function getSavingReminder(saving, savedAmount) {
+    const end = new Date(saving.endDate);
+    const today = new Date();
+    const daysLeft = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+    if (savedAmount < saving.amount && daysLeft <= 3 && daysLeft >= 0) {
+      return <div className="text-yellow-300 text-sm">⏰ Only {daysLeft} day(s) left to reach your saving goal!</div>;
+    }
+    if (savedAmount >= saving.amount) {
+      return <div className="text-green-400 text-sm">🎉 Saving goal reached!</div>;
+    }
+    return null;
   }
-  if (savedAmount >= saving.amount) {
-    return <div className="text-green-400 text-sm">🎉 Saving goal reached!</div>;
-  }
-  return null;
-}
 
   return (
     <div className="flex flex-grow flex-nowrap overflow-auto no-scrollbar bg-gray-800 text-white">
@@ -474,76 +496,32 @@ function getSavingReminder(saving, savedAmount) {
         {viewedAccount && (
           <>
           {budgets.length > 0 ? (
-          <div key={animateKey} className="bg-gray-700 p-5 rounded-xl mt-5 stagger-container min-w-210 w-auto">
-            <h3 className="text-2xl mb-3">Budgets</h3>
-            <ul>
-              {budgets.map((budget) => {
-                const currentAmount = getSpentAmount(budget); // Calculate the spent amount
-                const progress = (currentAmount.spent / budget.amount) * 100; // Calculate progress as a percentage
+            <BudgetList
+              budgets={budgets}
+              getSpentAmount={getSpentAmount}
+              handleDeleteBudget={handleDeleteBudget}
+              getBudgetReminder={getBudgetReminder}
+            />
+          ) : (
+            <div className="bg-gray-700 p-5 rounded-xl mt-5 stagger-container">
+              <h3 className="text-2xl mb-3">No Budgets Found</h3>
+              <p>You haven't added any budgets yet.</p>
+            </div>
+          )}
 
-                return (
-                  <li key={budget.id} className="mb-3 stagger-container">
-                    <BudgetWidget
-                      budget={budget}
-                      handleDeleteBudget={handleDeleteBudget}
-                      name={budget.name}
-                      category={budget.category}
-                      budgetedAmount={budget.amount}
-                      spentAmount={currentAmount.spent}
-                      gains={currentAmount.gains}
-                      startDate={budget.startDate}
-                      endDate={budget.endDate}
-                      // startDate={new Date(budget.startDate).toLocaleDateString()}
-                      // endDate={new Date(budget.endDate).toLocaleDateString()}
-                      progress={progress}
-                    />
-                    {getBudgetReminder(budget, currentAmount.spent)}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ) : (
-          <div className="bg-gray-700 p-5 rounded-xl mt-5 stagger-container">
-            <h3 className="text-2xl mb-3">No Budgets Found</h3>
-            <p>You haven't added any budgets yet.</p>
-          </div>
-        )}
-
-        {savings.length > 0 ? (
-          <div className="bg-gray-700 p-5 rounded-xl mt-5 stagger-container min-w-210 w-auto">
-            <h3 className="text-2xl mb-3">Savings</h3>
-            <ul>
-              {savings.map((saving) => {
-                const savedAmount = getSavedAmount(saving); // Get the saved amount
-                const progress = (savedAmount / saving.amount) * 100; // Calculate progress as a percentage
-
-                return (
-                  <li key={saving.id} className="mb-3 stagger-container">
-                    <SavingWidget
-                      saving={saving}
-                      name={saving.name}
-                      goalAmount={saving.amount}
-                      startDate={saving.startDate}
-                      endDate={saving.endDate}
-                      savedAmount={savedAmount}
-                      progress={progress}
-                      handleDeleteSaving={() => handleDeleteSaving(saving.id)}
-                    />
-                    {getSavingReminder(saving, savedAmount)}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ) : (
-          <div className="bg-gray-700 p-5 rounded-xl mt-5 stagger-container">
-            <h3 className="text-2xl mb-3">No Savings Found</h3>
-            <p>You haven't added any savings yet.</p>
-          </div>
-        )}
-
-
+          {savings.length > 0 ? (
+            <SavingList
+              savings={savings}
+              getSavedAmount={getSavedAmount}
+              handleDeleteSaving={handleDeleteSaving}
+              getSavingReminder={getSavingReminder}
+            />
+          ) : (
+            <div className="bg-gray-700 p-5 rounded-xl mt-5 stagger-container">
+              <h3 className="text-2xl mb-3">No Savings Found</h3>
+              <p>You haven't added any savings yet.</p>
+            </div>
+          )}
 
           <div className="flex flex-row">
             <button
@@ -561,121 +539,23 @@ function getSavingReminder(saving, savedAmount) {
           </div>
 
           <div className="flex flex-row">
-          {addBudget && (
-            <div className="bg-gray-700 p-5 rounded-xl mb-5 mr-5 w-100 fade-in">
-              <h3 className="text-2xl mb-3">Add Budget</h3>
-              <input
-                className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
-                type="text"
-                name="name"
-                value={budgetForm.name}
-                placeholder="Budget Name"
-                onChange={handleBudgetForm}
+            {addBudget && (
+              <BudgetForm
+                budgetForm={budgetForm}
+                handleBudgetForm={handleBudgetForm}
+                handleAddBudget={handleAddBudget}
+                resetBudgetForm={resetBudgetForm}
+                availableCategories={availableCategories}
               />
-              <input
-                className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
-                type="number"
-                name="amount"
-                value={budgetForm.amount}
-                placeholder="Budget Amount"
-                onChange={handleBudgetForm}
+            )}
+            {addSaving && (
+              <SavingForm
+                savingForm={savingForm}
+                handleSavingForm={handleSavingForm}
+                handleAddSaving={handleAddSaving}
+                resetSavingForm={resetSavingForm}
               />
-              <input
-                className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
-                type="date"
-                name="startDate"
-                value={budgetForm.startDate}
-                placeholder="Start Date"
-                onChange={handleBudgetForm}
-              />
-              <input
-                className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
-                type="date"
-                name="endDate"
-                value={budgetForm.endDate}
-                placeholder="End Date"
-                onChange={handleBudgetForm}
-              />
-              
-              <select
-                className="border-2 border-gray-500 bg-gray-700 rounded-xl m-1 p-1 w-full"
-                name="category"
-                value={budgetForm.category}
-                onChange={handleBudgetForm}
-              >
-                <option value="" disabled>
-                  Select Category
-                </option>
-                {availableCategories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-              <button
-                className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 mr-3 scale-on-hover"
-                onClick={handleAddBudget}
-              >
-                Save Budget
-              </button>
-              <button
-                className="w-fit h-8 bg-red-600 rounded-4xl px-2 my-5 scale-on-hover"
-                onClick={() => resetBudgetForm()}
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-
-          {addSaving && (
-            <div className="bg-gray-700 p-5 rounded-xl mb-5 w-100 h-80 fade-in">
-              <h3 className="text-2xl mb-3">Add Saving</h3>
-              <input
-                className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
-                type="text"
-                name="name"
-                value={savingForm.name}
-                placeholder="Saving Name"
-                onChange={handleSavingForm}
-              />
-              <input
-                className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
-                type="number"
-                name="amount"
-                value={savingForm.amount}
-                placeholder="Goal Amount"
-                onChange={handleSavingForm}
-              />
-              <input
-                className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
-                type="date"
-                name="startDate"  
-                value={savingForm.startDate}
-                placeholder="Start Date"
-                onChange={handleSavingForm}
-              />
-              <input
-                className="border-2 border-gray-500 rounded-xl m-1 p-1 w-full"
-                type="date"
-                name="endDate"
-                value={savingForm.endDate}
-                placeholder="End Date"
-                onChange={handleSavingForm}
-              />
-              <button
-                className="w-fit h-8 bg-blue-600 rounded-4xl px-2 my-5 mr-3 scale-on-hover"
-                onClick={handleAddSaving}
-              >
-                Save Saving
-              </button>
-              <button
-                className="w-fit h-8 bg-red-600 rounded-4xl px-2 my-5 scale-on-hover"
-                onClick={() => resetSavingForm()}
-              >
-                Cancel
-              </button>
-            </div>
-          )}
+            )}
           </div>
           </>
         )}
@@ -683,4 +563,4 @@ function getSavingReminder(saving, savedAmount) {
     </div>
   );
 }
-export default AllowancePage
+export default AllowancePage;
