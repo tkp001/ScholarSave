@@ -172,7 +172,12 @@ const BalancePage = () => {
           )}
 
           <div className="flex flex-col max-w-100 min-w-60 w-100 p-4 h-full stagger-container">
-          <div className="text-xl mb-4">Accounts</div>
+          {accounts.length > 0 ? (
+            <div className="text-xl mb-3 fade-in">Your Accounts</div>
+            ) : (
+            <div></div>)
+          }
+
           {accounts.slice(0, 5).map((acc) => (
             <div key={acc.id} className="mb-3 p-2 bg-gray-700 rounded-xl" onClick={() => updateViewedAccount(acc)}>
               <div className="font-semibold">{acc.nickname}</div>
