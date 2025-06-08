@@ -12,7 +12,7 @@ A financial management application that allows students to track their spending.
 
 ### Expense Tracking
 - **Manual Entry and Auto Import**  
-  Users can manually enter expenses, sync bank accounts for automatic tracking (dependent on bank API), or import CSV files. The app supports cleaning up bank statements and accessing statements by date, amount, or title.
+  Users can manually enter expenses or import CSV files. The app supports cleaning up bank statements and accessing statements by date, amount, or title.
 
 - **Real-Time Categorization**  
   AI-powered suggestions for categorizing transactions (e.g., food, transport, subscriptions).
