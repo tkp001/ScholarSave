@@ -4,7 +4,7 @@
 
 # Description
 
-A financial management application that allows students to track their spending. Students can track expenses, income, debt/loan, set goals and do budgeting/saving. Additional tools are integrated for interest and currency exchange calculations. AI enhancement provides correction in transaction entries and serves as a learning tool for students interested in learning more about specific topics and provides suggestion on their current financial state.
+A financial management application that allows students to track their spending. Students can track expenses, income, debt/loan, set goals and do budgeting/saving. Additional tools are integrated for interest and currency exchange calculations. AI enhancements were integrated to provide corrections in transaction entries and serves as a learning tool for students interested in learning more about specific financial topics and their current financial state through chatbots.
 
 ---
 
@@ -74,3 +74,13 @@ A financial management application that allows students to track their spending.
 - Jspdf
 
 ---
+
+## Other Skills Learned
+- Terminology in Cloud CRM and related careers
+- Documentation (code and reports)
+- Sprint Reviews
+- Software Development Life Cycle (SDLC)
+- Firebase
+- GitHub
+- Figma
+- API/AI Integration
